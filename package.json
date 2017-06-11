@@ -23,6 +23,10 @@
     "url": "https://github.com/normen/homebridge-bravia/issues"
   },
   "homepage": "https://github.com/normen/homebridge-bravia#readme",
+  "engines": {
+    "homebridge": ">=0.4.0",
+    "node": ">=0.12.0"
+  },
   "dependencies": {
     "base-64": ">=0.0.0",
     "http": ">=0.0.0",
