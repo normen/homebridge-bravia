@@ -4,6 +4,7 @@ var http = require('http');
 var inherits = require('util').inherits;
 var prompt = require('prompt');
 var base64 = require('base-64');
+var debug = false;
 
 var Service;
 var Characteristic;
@@ -237,12 +238,12 @@ SonyTV.prototype.getChannelUris = function(next50from) {
     }
     var post_data = '{"id":13,"method":"getContentList","version":"1.0","params":[{ "source":"' + this.tvsource + '","stIdx": ' + this.next50from + '}]}';
     var onError = function(err) {
-        that.log("Error: ",err);
+        if(debug) that.log("Error: ",err);
         return;
     };
     var onSucces = function(data) {
         if(data.indexOf("error")>=0){
-            that.log("Error? ",data)
+            if(debug) that.log("Error? ",data)
             return;
         }
         try {
@@ -267,11 +268,11 @@ SonyTV.prototype.checkRegistration = function() {
     this.registercheck = true;
     var post_data = '{"id":8,"method":"actRegister","version":"1.0","params":[{"clientid":"HomeBridge:34c48639-af3d-40e7-b1b2-74091375368c","nickname":"homebridge"},[{"clientid":"HomeBridge:34c48639-af3d-40e7-b1b2-74091375368c","value":"yes","nickname":"homebridge","function":"WOL"}]]}';
     var onError = function(err) {
-        that.log("Error: ",err);
+        if(debug) that.log("Error: ",err);
         return false;
     };
     var onSucces = function(chunk) {
-        if(chunk.indexOf("error")>=0){that.log("Error? ",chunk)}
+        if(chunk.indexOf("error")>=0){if(debug) that.log("Error? ",chunk)}
         if (chunk.indexOf("[]") < 0) {
             prompt.start();
             prompt.get(['pin'], function(err, result) {
@@ -291,7 +292,7 @@ SonyTV.prototype.listApplications = function() {
     var that = this;
     var post_data = '{"id":13,"method":"getApplicationList","version":"1.0","params":[]}';
     var onError = function(err) {
-        that.log("Error: ",err);
+        if(debug) that.log("Error: ",err);
         callback(null, 0);
     };
     var onSucces = function(data) {
@@ -311,7 +312,7 @@ SonyTV.prototype.startApplication = function(name, channel, callback) {
     var that = this;
     var post_data = '{"id":13,"method":"setActiveApp","version":"1.0","params":[{"uri":"'+name+'"}]}';
     var onError = function(err) {
-        that.log("Error: ",err);
+        if(debug) that.log("Error: ",err);
         callback(null, 0);
     };
     var onSucces = function(data) {
@@ -333,12 +334,12 @@ SonyTV.prototype.getChannel = function(callback) {
     }
     var post_data = '{"id":13,"method":"getPlayingContentInfo","version":"1.0","params":[]}';
     var onError = function(err) {
-        that.log("Error: ",err);
+        if(debug) that.log("Error: ",err);
         if (!isNull(callback)) callback(null, 0);
     };
     var onSucces = function(chunk) {
         if(chunk.indexOf("error")>=0){
-            that.log("Error? ",chunk)
+            if(debug) that.log("Error? ",chunk)
             if (!isNull(callback)) callback(null, 0);
         }
         else{
@@ -368,7 +369,7 @@ SonyTV.prototype.setChannel = function(channel, callback) {
         return;
     }
     if (channel > this.maxchannels) {
-        var name = that.apps[channel-this.maxchannels];
+        var name = that.apps[channel-this.maxchannels-1];
         that.startApplication(name, channel, callback);
         return;
     }
@@ -383,7 +384,7 @@ SonyTV.prototype.setChannel = function(channel, callback) {
     }
     var post_data = '{"id":13,"method":"setPlayContent","version":"1.0","params":[{ "uri": "' + uri + '" }]}';
     var onError = function(err) {
-        that.log("Error: ",err);
+        if(debug) that.log("Error: ",err);
         if (!isNull(callback)) callback(null, 0);
     };
     var onSucces = function(chunk) {
@@ -405,7 +406,7 @@ SonyTV.prototype.setMuted = function(muted, callback) {
     var merterd = muted?"true":"false";
     var post_data = '{"id":13,"method":"setAudioMute","version":"1.0","params":[{"status":' + merterd + '}]}';
     var onError = function(err) {
-        that.log("Error: ",err);
+        if(debug) that.log("Error: ",err);
         if (!isNull(callback)) callback(null, 0);
     };
     var onSucces = function(chunk) {
@@ -423,12 +424,12 @@ SonyTV.prototype.getMuted = function(callback) {
     }
     var post_data = '{"id":4,"method":"getVolumeInformation","version":"1.0","params":[]}';
     var onError = function(err) {
-        that.log("Error: ",err);
+        if(debug) that.log("Error: ",err);
         if (!isNull(callback)) callback(null, false);
     };
     var onSucces = function(chunk) {
         if(chunk.indexOf("error")>=0){
-            that.log("Error? ",chunk);
+            if(debug) that.log("Error? ",chunk);
             if (!isNull(callback)) callback(null, false);
             return;
         }
@@ -464,7 +465,7 @@ SonyTV.prototype.setVolume = function(volume, callback) {
     }
     var post_data = '{"id":13,"method":"setAudioVolume","version":"1.0","params":[{"target":"' + that.soundoutput + '","volume":"' + volume + '"}]}';
     var onError = function(err) {
-        that.log("Error: ",err);
+        if(debug) that.log("Error: ",err);
         if (!isNull(callback)) callback(null, 0);
     };
     var onSucces = function(chunk) {
@@ -481,12 +482,12 @@ SonyTV.prototype.getVolume = function(callback) {
     }
     var post_data = '{"id":4,"method":"getVolumeInformation","version":"1.0","params":[]}';
     var onError = function(err) {
-        that.log("Error: ",err);
+        if(debug) that.log("Error: ",err);
         if (!isNull(callback)) callback(null, 0);
     };
     var onSucces = function(chunk) {
         if(chunk.indexOf("error")>=0){
-            that.log("Error? ",chunk)
+            if(debug) that.log("Error? ",chunk)
             if (!isNull(callback)) callback(null, 0);
             return;
         }
@@ -517,7 +518,7 @@ SonyTV.prototype.getVolume = function(callback) {
 SonyTV.prototype.getPowerState = function(callback) {
     var that = this;
     var onError = function(err) {
-        that.log("Error: ",err);
+        if(debug) that.log("Error: ",err);
         if (!isNull(callback)) callback(null, false);
         that.power = false;
     };
@@ -556,7 +557,7 @@ SonyTV.prototype.getPowerState = function(callback) {
 SonyTV.prototype.setPowerState = function(state, callback) {
     var that = this;
     var onError = function(err) {
-        that.log("Error: ",err);
+        if(debug) that.log("Error: ",err);
         that.getPowerState(callback);
     };
     var onSucces = function(chunk) {
