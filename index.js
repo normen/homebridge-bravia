@@ -39,6 +39,7 @@ function SonyTV(log, config) {
     this.config = config;
     this.name = config.name;
     this.ip = config.ip;
+    this.port = config.port;
     this.tvsource = config.tvsource;
     this.soundoutput = config.soundoutput;
     this.listapplications = config.listapplications;
@@ -57,6 +58,7 @@ function SonyTV(log, config) {
     this.appslisted = false;
     this.commandCanTurnTvOn = true;
 
+    this.port = this.port ? this.port : "80";
     this.cookiepath = this.cookiepath ? this.cookiepath : "/home/pi/.homebridge/sonycookie";
     this.maxchannels = this.maxchannels ? this.maxchannels : 1000;
     this.updaterate = this.updaterate ? this.updaterate : 5000;
@@ -591,7 +593,7 @@ SonyTV.prototype.getPostOptions = function(url) {
     } else {
         post_options = {
             host: that.ip,
-            port: '80',
+            port: that.port,
             path: url,
             method: 'POST',
             headers: {}

@@ -57,6 +57,7 @@ Optional options (all inside one TV entry):
   - `updaterate` rate at which the TV is polled for its state in milliseconds, default `5000`
   - `starttimeout` time the plugin waits after starting the TV before sending the command (when starting the TV by sending a command), default `5000`
   - `apps` a list of URIs for applications that are started when the special "app channels" are set, default empty
+  - `port` is the IP port of your TV, default 80
 
 ### First run + registration
 When you run the plugin for the first time you will have to run homebridge directly from command line as the plugin prompts you for a PIN that the TV will give you. This way the TV doesn't have to be set to the unsafe "Basic" login mode.
