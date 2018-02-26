@@ -59,7 +59,7 @@ function SonyTV(log, config) {
     this.commandCanTurnTvOn = true;
 
     this.port = this.port ? this.port : "80";
-    this.cookiepath = this.cookiepath ? this.cookiepath : "/home/pi/.homebridge/sonycookie";
+    this.cookiepath = this.cookiepath ? this.cookiepath : "~/.homebridge/sonycookie";
     this.maxchannels = this.maxchannels ? this.maxchannels : 1000;
     this.updaterate = this.updaterate ? this.updaterate : 5000;
     this.starttimeout = this.starttimeout ? this.starttimeout : 5000;
