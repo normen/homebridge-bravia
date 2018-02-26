@@ -4,6 +4,7 @@ var http = require('http');
 var inherits = require('util').inherits;
 var prompt = require('prompt');
 var base64 = require('base-64');
+const os = require('os');
 var debug = false;
 
 var Service;
@@ -59,7 +60,7 @@ function SonyTV(log, config) {
     this.commandCanTurnTvOn = true;
 
     this.port = this.port ? this.port : "80";
-    this.cookiepath = this.cookiepath ? this.cookiepath : "~/.homebridge/sonycookie";
+    this.cookiepath = this.cookiepath ? this.cookiepath : os.homedir()+"/.homebridge/sonycookie";
     this.maxchannels = this.maxchannels ? this.maxchannels : 1000;
     this.updaterate = this.updaterate ? this.updaterate : 5000;
     this.starttimeout = this.starttimeout ? this.starttimeout : 5000;
