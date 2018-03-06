@@ -1,5 +1,4 @@
-# homebridge-bravia
-[![NPM Version](https://img.shields.io/npm/v/homebridge-bravia.svg)](https://www.npmjs.com/package/homebridge-bravia)
+# homebridge-bravia [![NPM Version](https://img.shields.io/npm/v/homebridge-bravia.svg)](https://www.npmjs.com/package/homebridge-bravia)
 
 HomeBridge plugin for Sony Bravia TVs (AndroidTV based ones and possibly others).
 
