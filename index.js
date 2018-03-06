@@ -279,7 +279,9 @@ SonyTV.prototype.checkRegistration = function() {
   var onSucces = function(chunk) {
     if(chunk.indexOf("error")>=0){if(debug) that.log("Error? ",chunk)}
     if (chunk.indexOf("[]") < 0) {
-      that.log("Need to authenticate with TV, please enter the PIN that should appear on your TV")
+      that.log("Need to authenticate with TV");
+      console.log("Please enter the PIN that should appear on your TV.")
+      console.log("If no PIN appears on your TV, press CTRL-C until this process stops and re-start the homebridge process to try again.")
       prompt.start();
       prompt.get(['pin'], function(err, result) {
         if (err) return;

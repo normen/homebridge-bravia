@@ -59,7 +59,7 @@ Optional options (all inside one TV entry):
   - `port` is the IP port of your TV, default 80
 
 ### First run + registration
-When you run the plugin for the first time you might have to run homebridge directly from command line as the plugin prompts you for a PIN that the TV will give you. This way the TV doesn't have to be set to the unsafe "Basic" login mode.
+When you run the plugin for the first time you will have to run homebridge directly from command line as the plugin prompts you for a PIN that the TV will give you. This way the TV doesn't have to be set to the unsafe "Basic" login mode.
 
 ## Usage
 ### Basic functions
