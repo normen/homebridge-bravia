@@ -46,20 +46,20 @@ Required options:
   - `tvs` is the list of Sony TVs in your home
   - `name` is the name of your TV as it appears in HomeKit
   - `ip` is the IP address of your TV, find it out through your router or set it in the TV
-  - `tvsource` is your preferred TV source, can be `tv:dvbt`, `tv:dvbc` or `tv:dvbs`
-  - `soundoutput` is your preferred TV sound output, can be `speaker` or `headphone`
+  - `tvsource` is your preferred TV source, can be `tv:dvbt`, `tv:dvbc` or `tv:dvbs`, default `tv:dvbs`
+  - `soundoutput` is your preferred TV sound output, can be `speaker` or `headphone`, default `speaker`
 
 Optional options (all inside one TV entry):
   - `maxchannels` number of normal TV channels that can be accessed before the special "app channels" start (see below), default `1000`
   - `listapplications` lists the names and URIs of all applications installed on the TV in the homebridge log when set to 1, default `0`
-  - `cookiepath` file name to store the cookie file to, default `"/home/pi/.homebridge/sonycookie"`
+  - `cookiepath` file (!) name to store the cookie file to, default `"[user home]/.homebridge/sonycookie"`
   - `updaterate` rate at which the TV is polled for its state in milliseconds, default `5000`
   - `starttimeout` time the plugin waits after starting the TV before sending the command (when starting the TV by sending a command), default `5000`
   - `apps` a list of URIs for applications that are started when the special "app channels" are set, default empty
   - `port` is the IP port of your TV, default 80
 
 ### First run + registration
-When you run the plugin for the first time you will have to run homebridge directly from command line as the plugin prompts you for a PIN that the TV will give you. This way the TV doesn't have to be set to the unsafe "Basic" login mode.
+When you run the plugin for the first time you might have to run homebridge directly from command line as the plugin prompts you for a PIN that the TV will give you. This way the TV doesn't have to be set to the unsafe "Basic" login mode.
 
 ## Usage
 ### Basic functions

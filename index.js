@@ -24,6 +24,7 @@ module.exports = function(homebridge) {
 function BraviaPlatform(log, config){
   this.log = log;
   this.config = config;
+  debug = config.debug;
 }
 
 BraviaPlatform.prototype.accessories = function(callback) {
@@ -41,7 +42,7 @@ function SonyTV(log, config) {
   this.name = config.name;
   this.ip = config.ip;
   this.port = config.port || "80";
-  this.tvsource = config.tvsource || "dvbs";
+  this.tvsource = config.tvsource || "tv:dvbs";
   this.soundoutput = config.soundoutput || "speaker";
   this.listapplications = config.listapplications;
   this.maxchannels = config.maxchannels || 1000;
@@ -115,7 +116,7 @@ SonyTV.prototype.saveCookie = function(cookie) {
   var fs = require('fs');
   var stream = fs.createWriteStream(this.cookiepath);
   stream.on('error', function(err) {
-    that.log("Error writing pin file to " + this.cookiepath + ". Add a cookiepath parameter to config.json to specify the path. Note that you specify the FILE path, not the folder.");
+    that.log("Error writing cookie file to " + this.cookiepath + ". Add a cookiepath parameter to config.json to specify the path. Note that you specify the FILE path, not the folder.");
     process.exit(1);
   });
   stream.once('open', function(fd) {
@@ -129,8 +130,10 @@ SonyTV.prototype.loadCookie = function() {
   var fs = require('fs');
   fs.readFile(this.cookiepath, function(err, data) {
     if (err) {
+      if(debug) that.log("No cookie file found at " + this.cookiepath + ":",err);
       return;
     }
+    if(debug) that.log("Loaded cookie file from " + this.cookiepath);
     that.cookie = data.toString();
   });
 }
@@ -142,6 +145,7 @@ SonyTV.prototype.savePin = function(pin) {
   stream.once('open', function(fd) {
     stream.write(pin);
     stream.end();
+    if(debug) that.log("Saved pin file to " + this.cookiepath + "pin");
   });
 }
 
@@ -275,7 +279,7 @@ SonyTV.prototype.checkRegistration = function() {
   var onSucces = function(chunk) {
     if(chunk.indexOf("error")>=0){if(debug) that.log("Error? ",chunk)}
     if (chunk.indexOf("[]") < 0) {
-      that.log("Authenticating with TV, please enter the PIN that should appear on your TV")
+      that.log("Need to authenticate with TV, please enter the PIN that should appear on your TV")
       prompt.start();
       prompt.get(['pin'], function(err, result) {
         if (err) return;
@@ -286,6 +290,7 @@ SonyTV.prototype.checkRegistration = function() {
         that.checkRegistration();
       });
     } else {
+      if(debug) that.log("TV Auth succeeded.",err);
       that.authok = true;
     }
   };
