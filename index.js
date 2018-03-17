@@ -304,7 +304,6 @@ SonyTV.prototype.listApplications = function() {
   var post_data = '{"id":13,"method":"getApplicationList","version":"1.0","params":[]}';
   var onError = function(err) {
     if(debug) that.log("Error: ",err);
-    callback(null, 0);
   };
   var onSucces = function(data) {
     if (data.indexOf("error") < 0){
