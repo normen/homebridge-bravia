@@ -1,6 +1,6 @@
 {
   "name": "homebridge-bravia",
-  "version": "0.9.6",
+  "version": "1.0.0",
   "description": "Homebridge plugin for Sony Bravia TVs (AndroidTV based ones and possibly others)",
   "main": "index.js",
   "scripts": {
@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/normen/homebridge-bravia#readme",
   "engines": {
-    "homebridge": ">=0.4.0",
+    "homebridge": ">=0.4.46",
     "node": ">=0.12.0"
   },
   "dependencies": {
