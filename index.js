@@ -182,9 +182,7 @@ SonyTV.prototype.checkRegistration = function() {
     if (chunk.indexOf("[]") < 0) {
       that.log("Need to authenticate with TV!");
       that.log("Please enter the PIN that should appear on your TV or add \"pwd\":\"PIN_HERE\" to your config.json and restart HomeBridge, then remove that line for the next restart.")
-      console.log("**********");
       console.log("Enter PIN:");
-      console.log("**********");
       prompt.start();
       prompt.get(['pin'], function(err, result) {
         if (err) return;
@@ -749,10 +747,10 @@ SonyTV.prototype.loadCookie = function() {
   var fs = require('fs');
   fs.readFile(this.cookiepath, function(err, data) {
     if (err) {
-      if(debug) that.log("No cookie file found at " + this.cookiepath + ":",err);
+      if(debug) that.log("No cookie file found at " + that.cookiepath + ":",err);
       return;
     }
-    if(debug) that.log("Loaded cookie file from " + this.cookiepath);
+    if(debug) that.log("Loaded cookie file from " + that.cookiepath);
     that.cookie = data.toString();
   });
 }
