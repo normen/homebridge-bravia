@@ -87,6 +87,7 @@ Optional options (all inside one TV entry):
   - `soundoutput` is your preferred TV sound output, can be `speaker` or `headphone`, default `speaker`
   - `cookiepath` file (!) name to store the cookie file to, default `"[user home]/.homebridge/sonycookie"`
   - `port` is the IP port of your TV, default 80
+  - `mac` is the MAC address of your TV, set it to use WOL instead of HTTP to wake up the TV, default none
   - `pwd` set password to use Basic login - only recommended for PIN entry!
 
 ## Usage

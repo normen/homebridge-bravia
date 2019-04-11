@@ -4,6 +4,7 @@ var http = require('http');
 var inherits = require('util').inherits;
 var prompt = require('prompt');
 var base64 = require('base-64');
+var wol = require("wake_on_lan");
 const os = require('os');
 var debug = false;
 
@@ -52,6 +53,7 @@ function SonyTV(log, config) {
   this.config = config;
   this.name = config.name;
   this.ip = config.ip;
+  this.mac = config.mac || null;
   this.port = config.port || "80";
   this.tvsource = config.tvsource || null;
   this.soundoutput = config.soundoutput || "speaker";
@@ -612,12 +614,25 @@ SonyTV.prototype.setPowerState = function(state, callback) {
   var onSucces = function(chunk) {
     that.getPowerState(callback);
   };
+  var onWol = function(error) {
+    if (error) that.log("Error when sending WOL packets", error);
+    that.getPowerState(callback);
+  };
   if (state) {
-    var post_data = '{"id":2,"method":"setPowerStatus","version":"1.0","params":[{"status":true}]}';
-    that.makeHttpRequest(onError, onSucces, "/sony/system/", post_data,false);
+    if(!isNull(this.mac)){
+      wol.wake(this.mac, onWol);
+    }else{
+      var post_data = '{"id":2,"method":"setPowerStatus","version":"1.0","params":[{"status":true}]}';
+      that.makeHttpRequest(onError, onSucces, "/sony/system/", post_data,false);
+    }
   } else {
-    var post_data = '{"id":2,"method":"setPowerStatus","version":"1.0","params":[{"status":false}]}';
-    that.makeHttpRequest(onError, onSucces, "/sony/system/", post_data,false);
+    if(!isNull(this.mac)){
+      var post_data = this.createIRCC("AAAAAQAAAAEAAAAvAw==");
+      this.makeHttpRequest(onError, onSucces, "", post_data, false);
+    }else{
+      var post_data = '{"id":2,"method":"setPowerStatus","version":"1.0","params":[{"status":false}]}';
+      that.makeHttpRequest(onError, onSucces, "/sony/system/", post_data,false);
+    }
   }
 }
 
