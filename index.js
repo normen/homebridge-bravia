@@ -62,7 +62,8 @@ function SonyTV(log, config) {
   this.starttimeout = config.starttimeout || 5000;
   this.comp = config.compatibilitymode;
   this.sources = config.sources || ["extInput:hdmi", "extInput:component", "extInput:scart", "extInput:cec", "extInput:widi"];
-  this.useApps = isNull(config.applications)?false:config.applications;
+  this.useApps = isNull(config.applications)? false : config.applications.length > 0;
+  this.applications = isNull(config.applications) ? [] : config.applications;
 
   this.cookie = null;
   this.pwd = config.pwd || null;
@@ -270,7 +271,9 @@ SonyTV.prototype.receiveApplications = function() {
         var jayons = JSON.parse(data);
         var reslt = jayons.result[0];
         reslt.forEach(function(source){
-          that.addInputSource(source.title, source.uri, Characteristic.InputSourceType.APPLICATION);
+          if (that.applications.length == 0 || that.applications.indexOf(source.title) >= 0) {
+            that.addInputSource(source.title, source.uri, Characteristic.InputSourceType.APPLICATION);
+          }
         });
       }else{
         that.log("Error loading applications");
@@ -792,6 +795,8 @@ function getSourceType(name) {
     return Characteristic.InputSourceType.AIRPLAY;
   } else if(name.indexOf("dvb") !== -1){
     return Characteristic.InputSourceType.TUNER;
+  } else if(name.indexOf("app") !== -1){
+    return Characteristic.InputSourceType.APPLICATION;
   } else {
     return Characteristic.InputSourceType.OTHER;
   }
