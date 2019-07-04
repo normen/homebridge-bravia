@@ -62,8 +62,8 @@ function SonyTV(log, config) {
   this.starttimeout = config.starttimeout || 5000;
   this.comp = config.compatibilitymode;
   this.sources = config.sources || ["extInput:hdmi", "extInput:component", "extInput:scart", "extInput:cec", "extInput:widi"];
-  this.useApps = isNull(config.applications)? false : config.applications.length > 0;
-  this.applications = isNull(config.applications) ? [] : config.applications;
+  this.useApps = (isNull(config.applications)) ? false : (config.applications instanceof Array == true ? config.applications.length > 0 : config.applications);
+  this.applications = (isNull(config.applications) || (config.applications instanceof Array != true)) ? [] : config.applications;
 
   this.cookie = null;
   this.pwd = config.pwd || null;
