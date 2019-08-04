@@ -270,9 +270,12 @@ SonyTV.prototype.receiveApplications = function() {
       if (data.indexOf("error") < 0){
         var jayons = JSON.parse(data);
         var reslt = jayons.result[0];
-        reslt.forEach(function(source){
-          if (that.applications.length == 0 || that.applications.indexOf(source.title) >= 0) {
+        reslt.sort(source => source.title).forEach(function(source){
+          if (that.applications.length == 0 || that.applications.map(app => app.title).filter(title => source.title.includes(title)).length > 0) {
             that.addInputSource(source.title, source.uri, Characteristic.InputSourceType.APPLICATION);
+          }
+          else{
+            that.log("Ignoring application: " + source.title);
           }
         });
       }else{
