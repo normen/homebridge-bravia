@@ -84,6 +84,16 @@ Optional options (all inside one TV entry):
   - `sources` is an array of sources to display in HomeKit, default `["extInput:hdmi", "extInput:component", "extInput:scart", "extInput:cec", "extInput:widi"]`
   - `tvsource` is your preferred TV source, can be `tv:dvbt`, `tv:dvbc` or `tv:dvbs`, default none (no TV channels listed as inputs)
   - `applications` can be used to enable listing applications in the input list, default `false`
+  -- Providing an array of objects with application titles will only add applications whose names contain the titles to the input list:
+    ```
+    "applications": [
+                        {
+                            "title": "Netflix"
+                        },
+                        {
+                            "title": "Plex"
+                        },
+    ```
   - `soundoutput` is your preferred TV sound output, can be `speaker` or `headphone`, default `speaker`
   - `cookiepath` file (!) name to store the cookie file to, default `"[user home]/.homebridge/sonycookie"`
   - `port` is the IP port of your TV, default 80
