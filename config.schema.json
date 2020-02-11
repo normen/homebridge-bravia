@@ -2,10 +2,10 @@
   "pluginAlias": "BraviaPlatform",
   "pluginType": "platform",
   "headerDisplay": "Please see this documentation for the first setup: https://github.com/normen/homebridge-bravia#installation",
-  "footerDisplay": "For documentation please see the https://github.com/normen/homebridge-bravia",
+  "footerDisplay": "For documentation please see https://github.com/normen/homebridge-bravia",
   "schema": {
     "tvs": {
-      "title": "The TV list",
+      "title": "Registered TVs",
       "required": false,
       "type": "array",
       "items": {
@@ -23,32 +23,32 @@
             "required": true
           },
           "port": {
-            "title": "TV port number",
-            "description": "usually not required",
+            "title": "Port number",
+            "description": "HTTP port of the TV, usually not required",
             "type": "number",
             "required": false
           },
           "mac": {
-            "title": "TV MAC address",
-            "description": "usually not required",
+            "title": "MAC address",
+            "description": "MAC address of the TV, only required when using WOL",
             "type": "string",
             "required": false
           },
           "cookiepath": {
             "title": "Cookie Path",
             "type": "string",
-            "description": "full path and file name of the cookie file, default [user home]/.homebridge/sonycookie",
+            "description": "Full path and file name of the cookie file, default /(home)/.homebridge/sonycookie",
             "required": false
           },
           "pwd": {
-            "title": "Password",
+            "title": "PIN / password",
             "type": "string",
-            "description": "only required to enter PIN on first login or when using basic login",
+            "description": "Only required to enter PIN on first login or when using basic login",
             "required": false
           },
           "soundoutput": {
             "title": "Sound Output",
-            "description": "usually speaker or headphone",
+            "description": "Usually speaker or headphone",
             "type": "string",
             "default": "speaker",
             "oneOf": [
@@ -59,10 +59,10 @@
           },
           "tvsource": {
             "title": "TV Source",
-            "description": "tv:dvbs, tv:dvbt, tv:tvbc (sat, antenna or cable) or leave empty for none",
+            "description": "Select TV input to display TV channels in the input list",
             "type":"string",
             "oneOf": [
-              { "title": "Sat", "enum": ["tv:dvbs"] },
+              { "title": "Satellite", "enum": ["tv:dvbs"] },
               { "title": "Antenna", "enum": ["tv:dvbt"] },
               { "title": "Cable", "enum": ["tv:tvbc"] }
             ],
@@ -70,7 +70,7 @@
           },
           "applications": {
             "title": "Listed Apps",
-            "description": "leave empty to not list TV apps in the input list, add app names to show them",
+            "description": "Leave empty to not list TV apps in the input list, add app names to show those apps",
             "type": "array",
             "items":{
               "name": "Listed App",
@@ -98,5 +98,35 @@
         }
       }
     }
-  }
+  },
+  "form": [
+    {
+      "key":"tvs",
+      "items":[
+        "tvs[].name",
+        "tvs[].ip",
+        "tvs[].pwd",
+        "tvs[].tvsource",
+        "tvs[].soundoutput",
+        "tvs[].port",
+        "tvs[].mac",
+        "tvs[].cookiepath",
+        {
+          "key":"tvs[].applications",
+          "items":[
+            {
+              "key":"tvs[].applications[]",
+              "items":[
+                "tvs[].applications[].title"
+              ]
+            }
+          ]
+        },
+        {
+          "key":"tvs[].sources",
+          "items":["tvs[].sources[]"]
+        }
+      ]
+    }
+  ]
 }
