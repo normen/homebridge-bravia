@@ -591,21 +591,23 @@ SonyTV.prototype.getPowerState = function(callback) {
         if (!isNull(callback)) callback(null, false);
       }
     } catch (e) {
+      if(debug) console.log(e);
       that.updatePowerState(false);
       if (!isNull(callback)) callback(null, false);
     }
   };
   try {
-    ping.sys.probe(that.ip, function(isAlive) {
-      if (isAlive) {
+    /*ping.sys.probe(that.ip, function(isAlive) {
+      if (isAlive) {*/
         var post_data = '{"id":2,"method":"getPowerStatus","version":"1.0","params":[]}';
         that.makeHttpRequest(onError, onSucces, "/sony/system/", post_data,false);
-      } else {
+      /*} else {
         that.updatePowerState(false);
         if (!isNull(callback)) callback(null, false);
       }
-    });
+    });*/
   } catch (globalExcp) {
+    if(debug) console.log(globalExcp);
     that.updatePowerState(false);
     if (!isNull(callback)) callback(null, false);
   }
