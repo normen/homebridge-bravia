@@ -31,7 +31,7 @@
           "mac": {
             "title": "TV MAC address",
             "description": "usually not required",
-            "type": "number",
+            "type": "string",
             "required": false
           },
           "cookiepath": {
