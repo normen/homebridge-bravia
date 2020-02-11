@@ -1,0 +1,102 @@
+{
+  "pluginAlias": "BraviaPlatform",
+  "pluginType": "platform",
+  "headerDisplay": "Please see this documentation for the first setup: https://github.com/normen/homebridge-bravia#installation",
+  "footerDisplay": "For documentation please see the https://github.com/normen/homebridge-bravia",
+  "schema": {
+    "tvs": {
+      "title": "The TV list",
+      "required": false,
+      "type": "array",
+      "items": {
+        "name": "TV Config",
+        "type": "object",
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string",
+            "required": true
+          },
+          "ip": {
+            "title": "IP / Hostname",
+            "type": "string",
+            "required": true
+          },
+          "port": {
+            "title": "TV port number",
+            "description": "usually not required",
+            "type": "number",
+            "required": false
+          },
+          "mac": {
+            "title": "TV MAC address",
+            "description": "usually not required",
+            "type": "number",
+            "required": false
+          },
+          "cookiepath": {
+            "title": "Cookie Path",
+            "type": "string",
+            "description": "full path and file name of the cookie file, default [user home]/.homebridge/sonycookie",
+            "required": false
+          },
+          "pwd": {
+            "title": "Password",
+            "type": "string",
+            "description": "only required to enter PIN on first login or when using basic login",
+            "required": false
+          },
+          "soundoutput": {
+            "title": "Sound Output",
+            "description": "usually speaker or headphone",
+            "type": "string",
+            "default": "speaker",
+            "oneOf": [
+              { "title": "Speaker", "enum": ["speaker"] },
+              { "title": "Headphone", "enum": ["headphone"] }
+            ],
+            "required": false
+          },
+          "tvsource": {
+            "title": "TV Source",
+            "description": "tv:dvbs, tv:dvbt, tv:tvbc (sat, antenna or cable) or leave empty for none",
+            "type":"string",
+            "oneOf": [
+              { "title": "Sat", "enum": ["tv:dvbs"] },
+              { "title": "Antenna", "enum": ["tv:dvbt"] },
+              { "title": "Cable", "enum": ["tv:tvbc"] }
+            ],
+            "required": false
+          },
+          "applications": {
+            "title": "Listed Apps",
+            "description": "leave empty to not list TV apps in the input list, add app names to show them",
+            "type": "array",
+            "items":{
+              "name": "Listed App",
+              "type": "object",
+              "properties": {
+                "title": {
+                  "title": "App Name",
+                  "description":"a part of the name should suffice",
+                  "type": "string"
+                }
+              }
+            },
+            "required": false
+          },
+          "sources": {
+            "title": "Listed Sources",
+            "description":"Defaults to: extInput:hdmi, extInput:component, extInput:scart, extInput:cec, extInput:widi, add entries to the list below to only show those inputs.",
+            "type": "array",
+            "required": false,
+            "items":{
+              "title": "Source Name",
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}
