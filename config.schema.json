@@ -28,22 +28,16 @@
             "type": "number",
             "required": false
           },
+          "serverPort": {
+            "title": "PIN entry server port",
+            "description": "HTTP port of the web server that is started for PIN entry, default 8999",
+            "type": "number",
+            "required": false
+          },
           "mac": {
             "title": "MAC address",
             "description": "MAC address of the TV, only required when using WOL",
             "type": "string",
-            "required": false
-          },
-          "cookiepath": {
-            "title": "Cookie Path",
-            "type": "string",
-            "description": "Full path and file name of the cookie file, default /(home)/.homebridge/sonycookie",
-            "required": false
-          },
-          "pwd": {
-            "title": "PIN / password",
-            "type": "string",
-            "description": "Only required to enter PIN on first login or when using basic login",
             "required": false
           },
           "soundoutput": {
@@ -64,7 +58,7 @@
             "oneOf": [
               { "title": "Satellite", "enum": ["tv:dvbs"] },
               { "title": "Antenna", "enum": ["tv:dvbt"] },
-              { "title": "Cable", "enum": ["tv:tvbc"] }
+              { "title": "Cable", "enum": ["tv:dvbc"] }
             ],
             "required": false
           },
@@ -105,12 +99,11 @@
       "items":[
         "tvs[].name",
         "tvs[].ip",
-        "tvs[].pwd",
         "tvs[].tvsource",
         "tvs[].soundoutput",
         "tvs[].port",
         "tvs[].mac",
-        "tvs[].cookiepath",
+        "tvs[].serverPort",
         {
           "key":"tvs[].applications",
           "items":[

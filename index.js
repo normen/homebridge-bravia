@@ -1,69 +1,71 @@
 "use strict";
-var ping = require('ping');
+//var ping = require('ping');
 var http = require('http');
-var inherits = require('util').inherits;
-var prompt = require('prompt');
+var url = require('url');
+//var prompt = require('prompt');
 var base64 = require('base-64');
 var wol = require("wake_on_lan");
 const os = require('os');
 var debug = false;
 
-var Service;
-var Characteristic;
+var Service, Characteristic, Accessory, UUIDGen, STORAGE_PATH;
 
-function BraviaPlatform(log, config){
+function BraviaPlatform(log, config, api){
   this.log = log;
   this.config = config;
-  this.accesoryCallback = null;
   debug = config.debug;
-}
-
-BraviaPlatform.prototype.accessories = function(callback) {
-  let that = this;
-  that.accessories = [];
-  that.config.tvs.forEach(function(tv) {
-    that.accessories.push(new SonyTV(that.log, tv));
-  });
-  that.accesoryCallback = callback;
-  that.checkAccessoryCallback();
-}
-
-BraviaPlatform.prototype.checkAccessoryCallback = function() {
-  let that = this;
-  var ready = true;
-  //do accessory callback if all TVs are ready
-  that.accessories.forEach(function(sonyTV) {
-    if(!sonyTV.statusCheck()){
-      ready = false;
-    }
-  });
-  if(!ready){
-    setTimeout(function(){
-      that.checkAccessoryCallback();
-    },500);
+  this.api = api;
+  if(!config.tvs){
+    log("Warning: Bravia plugin not configured.");
+    return;
   }
-  else{
-    if(!isNull(that.accesoryCallback))
-      that.accesoryCallback(that.accessories);
+  this.devices = [];
+  const self = this;
+  api.on("didFinishLaunching", function(){
+    self.config.tvs.forEach(function(tv) {
+      if(self.devices.find(device=>device.name === tv.name) == undefined){
+        self.devices.push(new SonyTV(self, tv));
+      }
+    });
+  });
+}
+
+BraviaPlatform.prototype.configureAccessory = function (accessory) {
+  let self = this;
+  if (!this.config || !this.config.tvs) { // happens if plugin is disabled and still active accessories
+    return;
+  }
+  if(this.config.tvs.find(tv=>tv.name === accessory.context.config.name) == undefined){
+    this.log('Removing TV ' + accessory.displayName + ' from HomeKit');
+    this.api.on("didFinishLaunching", function(){
+      self.api.unregisterPlatformAccessories('homebridge-bravia', 'BraviaPlatform', [ accessory ]);
+    });
+  } else {
+    this.log('Restoring ' + accessory.displayName + ' from HomeKit');
+    // TODO: reachable
+    accessory.reachable = true;
+    this.devices.push(new SonyTV(this, accessory.context.config, accessory));
   }
 }
 
-function SonyTV(log, config) {
-  this.log = log;
+function SonyTV(platform, config, accessory = null) {
+  this.platform = platform;
+  this.log = platform.log;
   this.config = config;
   this.name = config.name;
   this.ip = config.ip;
   this.mac = config.mac || null;
-  this.port = config.port || "80";
+  this.port = config.port || "80";
   this.tvsource = config.tvsource || null;
   this.soundoutput = config.soundoutput || "speaker";
-  this.cookiepath = config.cookiepath || os.homedir()+"/.homebridge/sonycookie";
   this.updaterate = config.updaterate || 5000;
   this.starttimeout = config.starttimeout || 5000;
   this.comp = config.compatibilitymode;
+  this.serverPort = config.serverPort || 8999;
   this.sources = config.sources || ["extInput:hdmi", "extInput:component", "extInput:scart", "extInput:cec", "extInput:widi"];
   this.useApps = (isNull(config.applications)) ? false : (config.applications instanceof Array == true ? config.applications.length > 0 : config.applications);
   this.applications = (isNull(config.applications) || (config.applications instanceof Array != true)) ? [] : config.applications;
+  this.cookiepath = STORAGE_PATH + "/sonycookie_" + this.name;
 
   this.cookie = null;
   this.pwd = config.pwd || null;
@@ -94,7 +96,60 @@ function SonyTV(log, config) {
 
   this.services = [];
 
+  if(accessory != null){
+    this.accessory = accessory;
+    this.grabServices(accessory);
+    this.applyCallbacks();
+  } else {
+    var uuid = UUIDGen.generate(this.name + "-SonyTV");
+    this.log('Creating new accessory for ' + this.name);
+    this.accessory = new Accessory(this.name, uuid);
+    this.accessory.context.config = config;
+    this.accessory.context.uuid = uuid;
+    this.log('New TV ' + this.name + ', will be queried for channels/apps and added to HomeKit');
+    this.createServices();
+    this.applyCallbacks();
+  }
+  this.checkRegistration();
+  this.updateStatus();
+}
+
+SonyTV.prototype.grabServices = function(accessory) {
+  let self = this;
+  //FIXME: Hack, using subtype to store URI for channel
+  accessory.services.forEach(service=>{
+    if((service.subtype !== undefined) && service.testCharacteristic(Characteristic.Identifier)){
+      var identifier = service.getCharacteristic(Characteristic.Identifier).value;
+      self.inputSources[identifier] = service;
+      self.uriToInputSource[service.subtype] = service;
+    }
+  });
+  this.services = [];
+  this.tvService = accessory.getService(Service.Television);
+  this.services.push(this.tvService);
+  this.speakerService = accessory.getService(Service.TelevisionSpeaker);
+  this.services.push(this.speakerService);
+  return this.services;
+}
+
+SonyTV.prototype.createServices = function() {
+  ///sony/system/
+  //["getSystemInformation",[],["{\"product\":\"string\", \"region\":\"string\", \"language\":\"string\", \"model\":\"string\", \"serial\":\"string\", \"macAddr\":\"string\", \"name\":\"string\", \"generation\":\"string\", \"area\":\"string\", \"cid\":\"string\"}"],"1.0"]
   this.tvService = new Service.Television(this.name);
+  this.services.push(this.tvService);
+  this.speakerService = new Service.TelevisionSpeaker();
+  this.services.push(this.speakerService);
+  // TODO: information services
+//  var informationService = new Service.AccessoryInformation();
+//  informationService
+//  .setCharacteristic(Characteristic.Manufacturer, "Sony")
+//  .setCharacteristic(Characteristic.Model, "Android TV")
+//  .setCharacteristic(Characteristic.SerialNumber, "12345");
+//  this.services.push(informationService);
+  return this.services;
+}
+
+SonyTV.prototype.applyCallbacks = function() {
   this.tvService.setCharacteristic(Characteristic.ConfiguredName, this.name);
   this.tvService
     .setCharacteristic(
@@ -105,19 +160,14 @@ function SonyTV(log, config) {
     .getCharacteristic(Characteristic.Active)
     .on('set', this.setPowerState.bind(this))
     .on('get', this.getPowerState.bind(this));
-
   this.tvService.setCharacteristic(Characteristic.ActiveIdentifier, 0);
   this.tvService
     .getCharacteristic(Characteristic.ActiveIdentifier)
     .on('set', this.setActiveIdentifier.bind(this))
     .on('get', this.getActiveIdentifier.bind(this));
-
   this.tvService
     .getCharacteristic(Characteristic.RemoteKey)
     .on('set', this.setRemoteKey.bind(this));
-  this.services.push(this.tvService);
-
-  this.speakerService = new Service.TelevisionSpeaker();
   this.speakerService
     .setCharacteristic(Characteristic.Active, Characteristic.Active.ACTIVE);
   this.speakerService
@@ -134,30 +184,6 @@ function SonyTV(log, config) {
 	this.speakerService.getCharacteristic(Characteristic.Volume)
     .on('get', this.getVolume.bind(this))
     .on('set', this.setVolume.bind(this));
-  this.services.push(this.speakerService);
-
-  this.checkRegistration();
-  this.updateStatus();
-}
-
-SonyTV.prototype.getServices = function() {
-  ///sony/system/
-  //["getSystemInformation",[],["{\"product\":\"string\", \"region\":\"string\", \"language\":\"string\", \"model\":\"string\", \"serial\":\"string\", \"macAddr\":\"string\", \"name\":\"string\", \"generation\":\"string\", \"area\":\"string\", \"cid\":\"string\"}"],"1.0"]
-  var informationService = new Service.AccessoryInformation();
-  informationService
-  .setCharacteristic(Characteristic.Manufacturer, "Sony")
-  .setCharacteristic(Characteristic.Model, "Android TV")
-  .setCharacteristic(Characteristic.SerialNumber, "12345");
-  this.services.push(informationService);
-  return this.services;
-}
-
-SonyTV.prototype.statusCheck = function() {
-  if(!this.registercheck) return false; // reg check not started
-  if(!this.authok) return false; // auth not yet succeeded
-  if(this.inputSourceList.length > 0) return false; // inputs not yet loaded
-  if(!this.appsLoaded) return false; // apps not yet loaded
-  return true;
 }
 
 //Do status check every 5 seconds
@@ -171,39 +197,66 @@ SonyTV.prototype.updateStatus = function() {
 }
 
 //Check if Device is Registered
-//Prompt in Console for PIN for First Registration
 SonyTV.prototype.checkRegistration = function() {
-  var that = this;
+  let self = this;
   this.registercheck = true;
-  var post_data = '{"id":8,"method":"actRegister","version":"1.0","params":[{"clientid":"HomeBridge:34c48639-af3d-40e7-b1b2-74091375368c","nickname":"homebridge"},[{"clientid":"HomeBridge:34c48639-af3d-40e7-b1b2-74091375368c","value":"yes","nickname":"homebridge","function":"WOL"}]]}';
+  var clientId = 'HomeBridge-Bravia' + ':' + this.accessory.context.uuid;
+  var post_data = '{"id":8,"method":"actRegister","version":"1.0","params":[{"clientid":"'+clientId+'","nickname":"homebridge"},[{"clientid":"HomeBridge:34c48639-af3d-40e7-b1b2-74091375368c","value":"yes","nickname":"homebridge","function":"WOL"}]]}';
   var onError = function(err) {
-    that.log("Error: ", err);
+    self.log("Error: ", err);
     return false;
   };
   var onSucces = function(chunk) {
-    if(chunk.indexOf("error")>=0){if(debug) that.log("Error? ",chunk)}
+    if(chunk.indexOf("error")>=0){if(debug) self.log("Error? ",chunk)}
     if (chunk.indexOf("[]") < 0) {
-      that.log("Need to authenticate with TV!");
-      that.log("Please enter the PIN that should appear on your TV or add \"pwd\":\"PIN_HERE\" to your config.json and restart HomeBridge, then remove that line for the next restart.")
-      console.log("Enter PIN:");
-      prompt.start();
-      prompt.get(['pin'], function(err, result) {
-        if (err) return;
-        that.pwd = result.pin;
-        that.checkRegistration();
+      self.log("Need to authenticate with TV!");
+      self.log("Please enter the PIN that appears on your TV at http://"+os.hostname()+":"+self.serverPort);
+      self.server = http.createServer(function (req, res) {
+        var urlObject = url.parse(req.url, true, false);
+        if(urlObject.query.pin){
+          res.writeHead(200, { 'Content-Type': 'text/html' }); 
+          res.write('<html><body>OK</body></html>');
+          self.pwd = urlObject.query.pin;
+          self.server.close();
+          self.checkRegistration();
+        } else {
+          res.writeHead(200, { 'Content-Type': 'text/html' }); 
+          res.write('<html><body><form action="/"><label for="pin">Enter PIN:</label><br><input type="text" id="pin" name="pin"><input type="submit" value="Submit"></form></body></html>');
+          res.end();
+        }
       });
+      self.server.listen(self.serverPort, function () {
+        self.log("PIN entry web server listening");
+      }.bind(self));
+      self.server.on('error', function (err) {
+        self.log("PIN entry web server error:", err);
+      }.bind(self));
     } else {
-      that.authok = true;
-      that.receiveNextSources();
+      self.authok = true;
+      if(!self.accessory.context.hasReceivedSources) self.receiveNextSources();
     }
   };
-  that.makeHttpRequest(onError, onSucces, "/sony/accessControl/", post_data,false);
+  self.makeHttpRequest(onError, onSucces, "/sony/accessControl/", post_data,false);
+}
+
+SonyTV.prototype.registerAccessory = function() {
+  let self = this;
+  this.accessory.context.hasReceivedSources = true;
+  this.services.forEach(service=>{
+    self.accessory.addService(service);
+  });
+  this.log("Registering HomeBridge Accessory for " + this.name);
+  this.platform.api.registerPlatformAccessories('homebridge-bravia', 'BraviaPlatform', [ this.accessory ]);
 }
 
 SonyTV.prototype.receiveNextSources = function() {
   let that = this;
   if(this.inputSourceList.length == 0){
-    if(this.useApps && !this.appsLoaded) this.receiveApplications();
+    if(this.useApps && !this.appsLoaded){
+      this.receiveApplications();
+    } else{
+      this.registerAccessory();
+    }
     return;
   }
   var source = this.inputSourceList.shift();
@@ -241,15 +294,13 @@ SonyTV.prototype.receiveSources = function(sourceName, sourceType) {
 
 SonyTV.prototype.addInputSource = function(name, uri, type) {
   let that = this;
+  // FIXME: Using subtype to store URI, hack!
   var inputSource = new Service.InputSource(name, uri); //displayname, subtype?
   inputSource.setCharacteristic(Characteristic.Identifier, that.inputSourceCount)
  	  .setCharacteristic(Characteristic.ConfiguredName, name)
  	  .setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN)
     .setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
  	  .setCharacteristic(Characteristic.InputSourceType, type);
-  inputSource.uri = uri;
-  inputSource.type = type;
-  inputSource.id = that.inputSourceCount;
   this.services.push(inputSource);
   this.tvService.addLinkedService(inputSource);
   this.inputSources[this.inputSourceCount] = inputSource;
@@ -263,7 +314,7 @@ SonyTV.prototype.receiveApplications = function() {
   var onError = function(err) {
     that.log("Error loading applications:");
     that.log(err);
-    that.appsLoaded = true;
+    that.registerAccessory();
   };
   var onSucces = function(data) {
     try{
@@ -284,7 +335,7 @@ SonyTV.prototype.receiveApplications = function() {
     }catch(e){
       that.log(e);
     }
-    that.appsLoaded = true;
+    that.registerAccessory();
   };
   var post_data = '{"id":13,"method":"getApplicationList","version":"1.0","params":[]}';
   that.makeHttpRequest(onError, onSucces, "/sony/appControl", post_data, false);
@@ -317,9 +368,11 @@ SonyTV.prototype.pollPlayContent = function() {
           var uri = result.uri
           if(that.currentUri != uri){
             that.currentUri = uri;
+            //TODO: inputSOurce 
             var inputSource = that.uriToInputSource[uri];
+            var id = inputSource.getCharacteristic(Characteristic.Identifier).value;
             if(!isNull(inputSource)){
-              that.tvService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(inputSource.id);
+              that.tvService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(id);
             }
           }
         }
@@ -356,9 +409,11 @@ SonyTV.prototype.setActiveApp = function(uri) {
 SonyTV.prototype.getActiveIdentifier = function(callback){
   var uri = this.currentUri;
   if(!isNull(uri)){
+    //TODO: inputSource
     var inputSource = this.uriToInputSource[uri];
+    var id = inputSource.getCharacteristic(Characteristic.Identifier).value;
     if(!isNull(inputSource)){
-      if(!isNull(callback)) callback(null, inputSource.id);
+      if(!isNull(callback)) callback(null, id);
       return;
     }
   }
@@ -366,12 +421,13 @@ SonyTV.prototype.getActiveIdentifier = function(callback){
 }
 
 SonyTV.prototype.setActiveIdentifier = function(identifier, callback){
+  //TODO: inputSOurces - grab from restored accessory!
   var inputSource = this.inputSources[identifier];
   if(!isNull(inputSource)){
     if(inputSource.type == Characteristic.InputSourceType.APPLICATION)
-      this.setActiveApp(inputSource.uri);
+      this.setActiveApp(inputSource.subtype);
     else
-      this.setPlayContent(inputSource.uri);
+      this.setPlayContent(inputSource.subtype);
   }
   if(!isNull(callback)) callback(null, identifier);
 }
@@ -808,7 +864,10 @@ function getSourceType(name) {
 }
 
 module.exports = function(homebridge) {
+  Accessory = homebridge.platformAccessory;
   Service = homebridge.hap.Service;
   Characteristic = homebridge.hap.Characteristic;
-  homebridge.registerPlatform("homebridge-bravia", "BraviaPlatform", BraviaPlatform);
+  UUIDGen = homebridge.hap.uuid;
+  STORAGE_PATH = homebridge.user.storagePath();
+  homebridge.registerPlatform("homebridge-bravia", "BraviaPlatform", BraviaPlatform, true);
 }
