@@ -420,8 +420,11 @@ SonyTV.prototype.getActiveIdentifier = function (callback) {
 SonyTV.prototype.setActiveIdentifier = function (identifier, callback) {
   // TODO: inputSOurces - grab from restored accessory!
   var inputSource = this.inputSources[identifier];
-  if (!isNull(inputSource)) {
-    if (inputSource.type == Characteristic.InputSourceType.APPLICATION) { this.setActiveApp(inputSource.subtype); } else { this.setPlayContent(inputSource.subtype); }
+  if (inputSource && inputSource.testCharacteristic(Characteristic.InputSourceType) &&
+    inputSource.getCharacteristic(Characteristic.InputSourceType).value == Characteristic.InputSourceType.APPLICATION) {
+    this.setActiveApp(inputSource.subtype);
+  } else {
+    this.setPlayContent(inputSource.subtype);
   }
   if (!isNull(callback)) callback(null, identifier);
 };
