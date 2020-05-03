@@ -281,6 +281,7 @@ SonyTV.prototype.receiveSources = function (sourceName, sourceType) {
         });
       } else {
         that.log('Error loading sources for ' + sourceName);
+        that.log(data);
       }
     } catch (e) {
       that.log(e);
@@ -329,6 +330,7 @@ SonyTV.prototype.receiveApplications = function () {
         });
       } else {
         that.log('Error loading applications');
+        that.log(data);
       }
     } catch (e) {
       that.log(e);
@@ -367,9 +369,11 @@ SonyTV.prototype.pollPlayContent = function () {
             that.currentUri = uri;
             // TODO: inputSOurce
             var inputSource = that.uriToInputSource[uri];
-            var id = inputSource.getCharacteristic(Characteristic.Identifier).value;
-            if (!isNull(inputSource)) {
-              that.tvService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(id);
+            if(inputSource){
+              var id = inputSource.getCharacteristic(Characteristic.Identifier).value;
+              if (!isNull(inputSource)) {
+                that.tvService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(id);
+              }
             }
           }
         }
@@ -406,19 +410,19 @@ SonyTV.prototype.setActiveApp = function (uri) {
 SonyTV.prototype.getActiveIdentifier = function (callback) {
   var uri = this.currentUri;
   if (!isNull(uri)) {
-    // TODO: inputSource
     var inputSource = this.uriToInputSource[uri];
-    var id = inputSource.getCharacteristic(Characteristic.Identifier).value;
-    if (!isNull(inputSource)) {
-      if (!isNull(callback)) callback(null, id);
-      return;
+    if(inputSource){
+      var id = inputSource.getCharacteristic(Characteristic.Identifier).value;
+      if (!isNull(inputSource)) {
+        if (!isNull(callback)) callback(null, id);
+        return;
+      }
     }
   }
   if (!isNull(callback)) callback(null, 0);
 };
 
 SonyTV.prototype.setActiveIdentifier = function (identifier, callback) {
-  // TODO: inputSOurces - grab from restored accessory!
   var inputSource = this.inputSources[identifier];
   if (inputSource && inputSource.testCharacteristic(Characteristic.InputSourceType) &&
     inputSource.getCharacteristic(Characteristic.InputSourceType).value == Characteristic.InputSourceType.APPLICATION) {

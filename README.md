@@ -19,7 +19,7 @@ This plugin requires iOS 12.2, to use it with previous iOS versions install vers
 ## Installation
 - Install homebridge using: npm install -g homebridge
 - Install this plugin using: npm install -g homebridge-bravia
-- Configure config.json or configure settings though web UI
+- Configure config.json or configure settings through web UI (config-ui-x)
 - Set "Remote start" to ON in your TV Settings->Network->Remote Start
 - Turn on the TV
 - Restart Homebridge
@@ -77,7 +77,6 @@ Optional options (all inside one TV entry):
                     ]
     ```
   - `soundoutput` is your preferred TV sound output, can be `speaker` or `headphone`, default `speaker`
-  - `cookiepath` file (!) name to store the cookie file to, default `"[user home]/.homebridge/sonycookie"`
   - `port` is the IP port of your TV, default 80
   - `mac` is the MAC address of your TV, set it to use WOL instead of HTTP to wake up the TV, default none
   - `serverPort` sets a different port than `8999` for the web server that allows entering the PIN number from the TV
