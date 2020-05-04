@@ -242,7 +242,12 @@ SonyTV.prototype.registerAccessory = function () {
   const self = this;
   this.accessory.context.hasReceivedSources = true;
   this.services.forEach(service => {
-    self.accessory.addService(service);
+    try{
+      self.accessory.addService(service);
+    } catch(e){
+      self.log("Error adding channel service!");
+      self.log(e);
+    }
   });
   this.log('Registering HomeBridge Accessory for ' + this.name);
   this.platform.api.registerPlatformAccessories('homebridge-bravia', 'BraviaPlatform', [this.accessory]);
