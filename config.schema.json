@@ -14,11 +14,13 @@
         "properties": {
           "name": {
             "title": "Name",
+            "description": "The name of your TV in HomeKit",
             "type": "string",
             "required": true
           },
           "ip": {
             "title": "IP / Hostname",
+            "description": "The IP address or host name of your TV, find/set in your router",
             "type": "string",
             "required": true
           },

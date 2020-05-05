@@ -19,7 +19,7 @@ This plugin requires iOS 12.2, to use it with previous iOS versions install vers
 ## Installation
 - Install homebridge using: npm install -g homebridge
 - Install this plugin using: npm install -g homebridge-bravia
-- Configure config.json or configure settings through web UI (config-ui-x)
+- Configure config.json or configure settings through web UI (see below for the options)
 - Set "Remote start" to ON in your TV Settings->Network->Remote Start
 - Turn on the TV
 - Restart Homebridge
@@ -59,23 +59,27 @@ Example config:
 Required options:
   - `tvs` is the list of Sony TVs in your home
   - `name` is the name of your TV as it appears in HomeKit
-  - `ip` is the IP address of your TV, find it out through your router or set it in the TV
+  - `ip` is the IP address or host name of your TV, find and/or set it through your router or set it in the TV
 
 Optional options (all inside one TV entry):
   - `sources` is an array of sources to display in HomeKit, default `["extInput:hdmi", "extInput:component", "extInput:scart", "extInput:cec", "extInput:widi"]`
-  - `tvsource` is your preferred TV source, can be `tv:dvbt`, `tv:dvbc` or `tv:dvbs`, default none (no TV channels listed as inputs)
+    - source strings for your TV might look different, check the web if you find the right ones for your TV/input types
+  - `tvsource` is your preferred TV source, can be `tv:dvbt`, `tv:dvbc` or `tv:dvbs` (antenna, cable or sat), default none
+    - effectively this is just another source like the ones above
   - `applications` can be used to enable listing applications in the input list, default `false`
-  -- Providing an array of objects with application titles will only add applications whose names contain the titles to the input list:
-    ```
-    "applications": [
-                        {
-                            "title": "Netflix"
-                        },
-                        {
-                            "title": "Plex"
-                        },
-                    ]
-    ```
+    - Providing an array of objects with application titles will only add applications whose names contain the titles to the input list:
+      ```
+      "applications": [
+                          {
+                              "title": "Netflix"
+                          },
+                          {
+                              "title": "Plex"
+                          },
+                      ]
+      ```
+  - `updaterate` interval in milliseconds for TV status updates (on/off etc), default `5000`
+  - `channelupdaterate` interval in milliseconds for updates of the channel list (default disabled - see below)
   - `soundoutput` is your preferred TV sound output, can be `speaker` or `headphone`, default `speaker`
   - `port` is the IP port of your TV, default 80
   - `mac` is the MAC address of your TV, set it to use WOL instead of HTTP to wake up the TV, default none
@@ -89,9 +93,11 @@ You can turn your TV on and off through Siri and Apples Home app.
 All Channels, Inputs and Applications can be selected in the HomeKit inputs selector
 #### TV Remote
 The TV registers as a TV remote device in HomeKit and allows to use basic function keys and set the volume through the Apple Remote app or iOS configuration screen. Use your phones volume knobs to set the TV volume!
+#### TV Speaker
+In addition to the iOS remote the plugin also exposes the TV speaker as a HomeKit accessory however only some apps show that accessory type, Apples Home app does not.
 
 ## Notes
 ### Channel List
-Currently the channel list is fixed the way it is when the plugin first scans the channels. Re-add or rename the TV (in homebridge, not in the HomeKit app) to scan the channels again.
+If the channel list or the applications on the TV change the changes will be reflected on the next HomeBridge reboot. If you want "live" updates at the cost of some network bandwidth, set the `channelupdaterate` parameter, a minimum value of `10000` is suggested.
 ### Misc
 Thanks go out to "lombi" for his sony bravia homebridge plugin, which this plugin is heavily based on.

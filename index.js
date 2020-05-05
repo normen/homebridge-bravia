@@ -1,5 +1,4 @@
 'use strict';
-// var ping = require('ping');
 var http = require('http');
 var url = require('url');
 var base64 = require('base-64');
@@ -26,15 +25,18 @@ function BraviaPlatform (log, config, api) {
         self.devices.push(new SonyTV(self, tv));
       }
     });
+    self.devices.forEach(device => device.start());
   });
 }
 
+// called by homebridge when a device is restored from cache
 BraviaPlatform.prototype.configureAccessory = function (accessory) {
   const self = this;
   if (!this.config || !this.config.tvs) { // happens if plugin is disabled and still active accessories
     return;
   }
-  if (this.config.tvs.find(tv => tv.name === accessory.context.config.name) == undefined) {
+  var existingConfig = this.config.tvs.find(tv => tv.name === accessory.context.config.name);
+  if (existingConfig === undefined) {
     this.log('Removing TV ' + accessory.displayName + ' from HomeKit');
     this.api.on('didFinishLaunching', function () {
       self.api.unregisterPlatformAccessories('homebridge-bravia', 'BraviaPlatform', [accessory]);
@@ -43,10 +45,13 @@ BraviaPlatform.prototype.configureAccessory = function (accessory) {
     this.log('Restoring ' + accessory.displayName + ' from HomeKit');
     // TODO: reachable
     accessory.reachable = true;
-    this.devices.push(new SonyTV(this, accessory.context.config, accessory));
+    // if its restored its registered
+    self.devices.push(new SonyTV(this, existingConfig, accessory));
+    accessory.context.isRegisteredInHomeKit = true;
   }
 };
 
+// TV accessory class
 function SonyTV (platform, config, accessory = null) {
   this.platform = platform;
   this.log = platform.log;
@@ -76,24 +81,18 @@ function SonyTV (platform, config, accessory = null) {
   this.power = false;
 
   this.inputSourceList = [];
-  this.inputSources = [];
+  this.inputSourceMap = [];
 
   this.currentUri = null;
   this.currentMediaState = Characteristic.TargetMediaState.STOP; // TODO
   this.inputSourceCount = 1;
   this.uriToInputSource = [];
 
-  const that = this;
-  this.sources.forEach(function (sourceName) {
-    that.inputSourceList.push(new InputSource(sourceName, getSourceType(sourceName)));
-  });
-  if (!isNull(this.tvsource)) {
-    this.inputSourceList.push(new InputSource(this.tvsource, getSourceType(this.tvsource)));
-  }
-
   this.loadCookie();
 
   this.services = [];
+  this.channelServices = [];
+  this.scannedChannels = [];
 
   if (accessory != null) {
     this.accessory = accessory;
@@ -109,18 +108,28 @@ function SonyTV (platform, config, accessory = null) {
     this.createServices();
     this.applyCallbacks();
   }
-  this.checkRegistration();
-  this.updateStatus();
 }
 
+// start checking for registration and start polling status
+SonyTV.prototype.start = function () {
+  this.checkRegistration();
+  this.updateStatus();
+};
+
+// get the services (TV service, channels) from a restored HomeKit accessory
 SonyTV.prototype.grabServices = function (accessory) {
   const self = this;
   // FIXME: Hack, using subtype to store URI for channel
   accessory.services.forEach(service => {
     if ((service.subtype !== undefined) && service.testCharacteristic(Characteristic.Identifier)) {
       var identifier = service.getCharacteristic(Characteristic.Identifier).value;
-      self.inputSources[identifier] = service;
+      self.inputSourceMap[identifier] = service;
       self.uriToInputSource[service.subtype] = service;
+      self.channelServices.push(service);
+      // restore input source count
+      if (self.inputSourceCount <= identifier) {
+        self.inputSourceCount = identifier + 1;
+      }
     }
   });
   this.services = [];
@@ -131,6 +140,7 @@ SonyTV.prototype.grabServices = function (accessory) {
   return this.services;
 };
 
+// create the television service for a new TV accessory
 SonyTV.prototype.createServices = function () {
   /// sony/system/
   // ["getSystemInformation",[],["{\"product\":\"string\", \"region\":\"string\", \"language\":\"string\", \"model\":\"string\", \"serial\":\"string\", \"macAddr\":\"string\", \"name\":\"string\", \"generation\":\"string\", \"area\":\"string\", \"cid\":\"string\"}"],"1.0"]
@@ -148,6 +158,7 @@ SonyTV.prototype.createServices = function () {
   return this.services;
 };
 
+// sets the callbacks for the homebridge services to call the functions of this TV instance
 SonyTV.prototype.applyCallbacks = function () {
   this.tvService.setCharacteristic(Characteristic.ConfiguredName, this.name);
   this.tvService
@@ -185,7 +196,7 @@ SonyTV.prototype.applyCallbacks = function () {
     .on('set', this.setVolume.bind(this));
 };
 
-// Do status check every 5 seconds
+// Do TV status check every 5 seconds
 SonyTV.prototype.updateStatus = function () {
   var that = this;
   setTimeout(function () {
@@ -195,7 +206,7 @@ SonyTV.prototype.updateStatus = function () {
   }, this.updaterate);
 };
 
-// Check if Device is Registered
+// Check if we already registered with the TV
 SonyTV.prototype.checkRegistration = function () {
   const self = this;
   this.registercheck = true;
@@ -232,44 +243,136 @@ SonyTV.prototype.checkRegistration = function () {
       });
     } else {
       self.authok = true;
-      if (!self.accessory.context.hasReceivedSources) self.receiveNextSources();
+      self.receiveSources();
     }
   };
   self.makeHttpRequest(onError, onSucces, '/sony/accessControl/', post_data, false);
 };
 
-SonyTV.prototype.registerAccessory = function () {
-  const self = this;
-  this.accessory.context.hasReceivedSources = true;
-  this.services.forEach(service => {
-    try{
-      self.accessory.addService(service);
-    } catch(e){
-      self.log("Error adding channel service!");
-      self.log(e);
-    }
-  });
-  this.log('Registering HomeBridge Accessory for ' + this.name);
-  this.platform.api.registerPlatformAccessories('homebridge-bravia', 'BraviaPlatform', [this.accessory]);
+// creates homebridge service for TV input
+SonyTV.prototype.addInputSource = function (name, uri, type) {
+  const that = this;
+  // FIXME: Using subtype to store URI, hack!
+  var inputSource = new Service.InputSource(name, uri); // displayname, subtype?
+  inputSource.setCharacteristic(Characteristic.Identifier, that.inputSourceCount)
+ 	  .setCharacteristic(Characteristic.ConfiguredName, name)
+ 	  .setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN)
+    .setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
+ 	  .setCharacteristic(Characteristic.InputSourceType, type);
+  this.channelServices.push(inputSource);
+  this.tvService.addLinkedService(inputSource);
+  this.uriToInputSource[uri] = inputSource;
+  this.inputSourceMap[this.inputSourceCount] = inputSource;
+  this.inputSourceCount++;
+  this.accessory.addService(inputSource);
+  this.log('Added input ' + name);// +" with URI "+uri);
 };
 
+SonyTV.prototype.haveChannel = function (source) {
+  if (this.scannedChannels.find(function (channel) {
+    if ((source.subtype == channel[1]) &&
+      (source.getCharacteristic(Characteristic.InputSourceType).value == channel[2]) &&
+      (source.getCharacteristic(Characteristic.ConfiguredName).value == channel[0])) {
+      return true;
+    }
+  }) !== undefined) return true;
+  return false;
+};
+
+SonyTV.prototype.haveInputSource = function (name, uri, type) {
+  if (this.channelServices.find(function (source) {
+    if ((source.subtype == uri) &&
+      (source.getCharacteristic(Characteristic.InputSourceType).value == type) &&
+      (source.getCharacteristic(Characteristic.ConfiguredName).value == name)) {
+      return true;
+    }
+  }) !== undefined) return true;
+  return false;
+};
+
+// syncs the channels and publishes/updates the TV accessory for HomeKit
+SonyTV.prototype.syncAccessory = function () {
+  const self = this;
+  var changeDone = false;
+  // add new channels
+  this.scannedChannels.forEach(channel => {
+    if (!self.haveInputSource(channel[0], channel[1], channel[2])) {
+      self.addInputSource(channel[0], channel[1], channel[2]);
+      changeDone = true;
+    }
+  });
+  // remove old channels
+  this.channelServices.forEach((service, idx, obj) => {
+    if (!self.haveChannel(service)) {
+      // TODO: make this function?
+      self.tvService.removeLinkedService(service);
+      self.accessory.removeService(service);
+      self.log('Removing nonexisting channel ' + service.getCharacteristic(Characteristic.ConfiguredName).value);
+      obj.splice(idx, 1);
+      changeDone = true;
+    }
+  });
+  if (!this.accessory.context.isRegisteredInHomeKit) {
+    // add base services that haven't been added yet
+    this.services.forEach(service => {
+      try {
+        if (!self.accessory.services.includes(service)) {
+          self.log('Adding base service to accessory');
+          self.accessory.addService(service);
+          changeDone = true;
+        }
+      } catch (e) {
+        self.log('Can\'t add service!');
+        self.log(e);
+      }
+    });
+    this.log('Registering HomeBridge Accessory for ' + this.name);
+    this.accessory.context.isRegisteredInHomeKit = true;
+    this.platform.api.registerPlatformAccessories('homebridge-bravia', 'BraviaPlatform', [this.accessory]);
+  } else if (changeDone) {
+    this.log('Updating HomeBridge Accessory for ' + this.name);
+    this.platform.api.updatePlatformAccessories([this.accessory]);
+  }
+};
+
+// initialize a scan for new sources, currently only called when starting the plugin
+SonyTV.prototype.receiveSources = function () {
+  if (!this.receivingSources) {
+    const that = this;
+    this.inputSourceList = [];
+    this.sources.forEach(function (sourceName) {
+      that.inputSourceList.push(new InputSource(sourceName, getSourceType(sourceName)));
+    });
+    if (!isNull(this.tvsource)) {
+      this.inputSourceList.push(new InputSource(this.tvsource, getSourceType(this.tvsource)));
+    }
+
+    this.receivingSources = true;
+    this.scannedChannels = [];
+    this.receiveNextSources();
+  }
+  if(this.config.channelupdaterate) setTimeout(this.receiveSources.bind(this), this.config.channelupdaterate);
+};
+// receive the next sources in the inputSourceList, register accessory if all have been received
 SonyTV.prototype.receiveNextSources = function () {
   const that = this;
   if (this.inputSourceList.length == 0) {
     if (this.useApps && !this.appsLoaded) {
       this.receiveApplications();
     } else {
-      this.registerAccessory();
+      this.receivingSources = false;
+      this.syncAccessory();
     }
     return;
   }
   var source = this.inputSourceList.shift();
   if (!isNull(source)) {
-    this.receiveSources(source.name, source.type);
+    this.receiveSource(source.name, source.type);
   }
 };
 
-SonyTV.prototype.receiveSources = function (sourceName, sourceType) {
+// TV http call to receive input list for source
+SonyTV.prototype.receiveSource = function (sourceName, sourceType) {
   const that = this;
   var onError = function (err) {
     that.log('Error loading sources for ' + sourceName);
@@ -282,10 +385,11 @@ SonyTV.prototype.receiveSources = function (sourceName, sourceType) {
         var jayons = JSON.parse(data);
         var reslt = jayons.result[0];
         reslt.forEach(function (source) {
-          that.addInputSource(source.title, source.uri, sourceType);
+          that.scannedChannels.push([source.title, source.uri, sourceType]);
         });
       } else {
-        that.log('Error loading sources for ' + sourceName);
+        that.log('Can\'t load sources for ' + sourceName);
+        that.log('TV response:');
         that.log(data);
       }
     } catch (e) {
@@ -297,29 +401,14 @@ SonyTV.prototype.receiveSources = function (sourceName, sourceType) {
   that.makeHttpRequest(onError, onSucces, '/sony/avContent', post_data, false);
 };
 
-SonyTV.prototype.addInputSource = function (name, uri, type) {
-  const that = this;
-  // FIXME: Using subtype to store URI, hack!
-  var inputSource = new Service.InputSource(name, uri); // displayname, subtype?
-  inputSource.setCharacteristic(Characteristic.Identifier, that.inputSourceCount)
- 	  .setCharacteristic(Characteristic.ConfiguredName, name)
- 	  .setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN)
-    .setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
- 	  .setCharacteristic(Characteristic.InputSourceType, type);
-  this.services.push(inputSource);
-  this.tvService.addLinkedService(inputSource);
-  this.inputSources[this.inputSourceCount] = inputSource;
-  this.uriToInputSource[uri] = inputSource;
-  this.inputSourceCount++;
-  this.log('Added input ' + name);// +" with URI "+uri);
-};
-
+// TV https call to receive application list
 SonyTV.prototype.receiveApplications = function () {
   const that = this;
   var onError = function (err) {
     that.log('Error loading applications:');
     that.log(err);
-    that.registerAccessory();
+    that.receivingSources = false;
+    that.syncAccessory();
   };
   var onSucces = function (data) {
     try {
@@ -328,24 +417,27 @@ SonyTV.prototype.receiveApplications = function () {
         var reslt = jayons.result[0];
         reslt.sort(source => source.title).forEach(function (source) {
           if (that.applications.length == 0 || that.applications.map(app => app.title).filter(title => source.title.includes(title)).length > 0) {
-            that.addInputSource(source.title, source.uri, Characteristic.InputSourceType.APPLICATION);
+            that.scannedChannels.push([source.title, source.uri, Characteristic.InputSourceType.APPLICATION]);
           } else {
-            that.log('Ignoring application: ' + source.title);
+            //            that.log('Ignoring application: ' + source.title);
           }
         });
       } else {
-        that.log('Error loading applications');
+        that.log('Can\'t load applications.');
+        that.log('TV response:');
         that.log(data);
       }
     } catch (e) {
       that.log(e);
     }
-    that.registerAccessory();
+    that.receivingSources = false;
+    that.syncAccessory();
   };
   var post_data = '{"id":13,"method":"getApplicationList","version":"1.0","params":[]}';
   that.makeHttpRequest(onError, onSucces, '/sony/appControl', post_data, false);
 };
 
+// TV http call to poll play content
 SonyTV.prototype.pollPlayContent = function () {
   // TODO: check app list if no play content for currentUri
   const that = this;
@@ -372,9 +464,8 @@ SonyTV.prototype.pollPlayContent = function () {
           var uri = result.uri;
           if (that.currentUri != uri) {
             that.currentUri = uri;
-            // TODO: inputSOurce
             var inputSource = that.uriToInputSource[uri];
-            if(inputSource){
+            if (inputSource) {
               var id = inputSource.getCharacteristic(Characteristic.Identifier).value;
               if (!isNull(inputSource)) {
                 that.tvService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(id);
@@ -390,6 +481,7 @@ SonyTV.prototype.pollPlayContent = function () {
   that.makeHttpRequest(onError, onSucces, '/sony/avContent/', post_data, false);
 };
 
+// TV http call to set play content
 SonyTV.prototype.setPlayContent = function (uri) {
   const that = this;
   var post_data = '{"id":13,"method":"setPlayContent","version":"1.0","params":[{ "uri": "' + uri + '" }]}';
@@ -401,6 +493,7 @@ SonyTV.prototype.setPlayContent = function (uri) {
   that.makeHttpRequest(onError, onSucces, '/sony/avContent/', post_data, true);
 };
 
+// TV http call to set the active app
 SonyTV.prototype.setActiveApp = function (uri) {
   const that = this;
   var post_data = '{"id":13,"method":"setActiveApp","version":"1.0","params":[{"uri":"' + uri + '"}]}';
@@ -412,11 +505,12 @@ SonyTV.prototype.setActiveApp = function (uri) {
   that.makeHttpRequest(onError, onSucces, '/sony/appControl', post_data, true);
 };
 
+// homebridge callback to get current channel identifier
 SonyTV.prototype.getActiveIdentifier = function (callback) {
   var uri = this.currentUri;
   if (!isNull(uri)) {
     var inputSource = this.uriToInputSource[uri];
-    if(inputSource){
+    if (inputSource) {
       var id = inputSource.getCharacteristic(Characteristic.Identifier).value;
       if (!isNull(inputSource)) {
         if (!isNull(callback)) callback(null, id);
@@ -427,8 +521,9 @@ SonyTV.prototype.getActiveIdentifier = function (callback) {
   if (!isNull(callback)) callback(null, 0);
 };
 
+// homebridge callback to set current channel
 SonyTV.prototype.setActiveIdentifier = function (identifier, callback) {
-  var inputSource = this.inputSources[identifier];
+  var inputSource = this.inputSourceMap[identifier];
   if (inputSource && inputSource.testCharacteristic(Characteristic.InputSourceType) &&
     inputSource.getCharacteristic(Characteristic.InputSourceType).value == Characteristic.InputSourceType.APPLICATION) {
     this.setActiveApp(inputSource.subtype);
@@ -438,6 +533,7 @@ SonyTV.prototype.setActiveIdentifier = function (identifier, callback) {
   if (!isNull(callback)) callback(null, identifier);
 };
 
+// homebridge callback to set volume via selector (up/down)
 SonyTV.prototype.setVolumeSelector = function (key, callback) {
   const that = this;
   var value = '';
@@ -460,6 +556,7 @@ SonyTV.prototype.setVolumeSelector = function (key, callback) {
   that.makeHttpRequest(onError, onSucces, '', post_data, false);
 };
 
+// homebridge callback to set pressed key
 SonyTV.prototype.setRemoteKey = function (key, callback) {
   var value = '';
   var that = this;
@@ -516,6 +613,7 @@ SonyTV.prototype.setRemoteKey = function (key, callback) {
   that.makeHttpRequest(onError, onSucces, '', post_data, false);
 };
 
+// homebridge callback to get muted state
 SonyTV.prototype.getMuted = function (callback) {
   var that = this;
   if (!that.power) {
@@ -557,6 +655,7 @@ SonyTV.prototype.getMuted = function (callback) {
   that.makeHttpRequest(onError, onSucces, '/sony/audio/', post_data, false);
 };
 
+// homebridge callback to set muted state
 SonyTV.prototype.setMuted = function (muted, callback) {
   var that = this;
   if (!that.power) {
@@ -576,6 +675,7 @@ SonyTV.prototype.setMuted = function (muted, callback) {
   that.makeHttpRequest(onError, onSucces, '/sony/audio/', post_data, false);
 };
 
+// homebridge callback to get absoluet volume
 SonyTV.prototype.getVolume = function (callback) {
   var that = this;
   if (!that.power) {
@@ -617,6 +717,7 @@ SonyTV.prototype.getVolume = function (callback) {
   that.makeHttpRequest(onError, onSucces, '/sony/audio/', post_data, false);
 };
 
+// homebridge callback to set absolute volume
 SonyTV.prototype.setVolume = function (volume, callback) {
   var that = this;
   if (!that.power) {
@@ -634,6 +735,7 @@ SonyTV.prototype.setVolume = function (volume, callback) {
   that.makeHttpRequest(onError, onSucces, '/sony/audio/', post_data, false);
 };
 
+// homebridge callback to get power state
 SonyTV.prototype.getPowerState = function (callback) {
   var that = this;
   var onError = function (err) {
@@ -659,15 +761,8 @@ SonyTV.prototype.getPowerState = function (callback) {
     }
   };
   try {
-    /* ping.sys.probe(that.ip, function(isAlive) {
-      if (isAlive) { */
     var post_data = '{"id":2,"method":"getPowerStatus","version":"1.0","params":[]}';
     that.makeHttpRequest(onError, onSucces, '/sony/system/', post_data, false);
-    /* } else {
-        that.updatePowerState(false);
-        if (!isNull(callback)) callback(null, false);
-      }
-    }); */
   } catch (globalExcp) {
     if (debug) console.log(globalExcp);
     that.updatePowerState(false);
@@ -675,6 +770,7 @@ SonyTV.prototype.getPowerState = function (callback) {
   }
 };
 
+// homebridge callback to set power state
 SonyTV.prototype.setPowerState = function (state, callback) {
   var that = this;
   var onError = function (err) {
@@ -706,6 +802,7 @@ SonyTV.prototype.setPowerState = function (state, callback) {
   }
 };
 
+// sends the current power state to homebridge
 SonyTV.prototype.updatePowerState = function (state) {
   if (this.power != state) {
     this.power = state;
@@ -713,6 +810,7 @@ SonyTV.prototype.updatePowerState = function (state) {
   }
 };
 
+// make http request to TV
 SonyTV.prototype.makeHttpRequest = function (errcallback, resultcallback, url, post_data, canTurnTvOn) {
   var that = this;
   var data = '';
@@ -753,10 +851,12 @@ SonyTV.prototype.makeHttpRequest = function (errcallback, resultcallback, url, p
   }
 };
 
+// helper to create IRCC command string
 SonyTV.prototype.createIRCC = function (command) {
   return '<?xml version="1.0" encoding="utf-8"?><s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"><s:Body><u:X_SendIRCC xmlns:u="urn:schemas-sony-com:service:IRCC:1"><IRCCCode>' + command + '</IRCCCode></u:X_SendIRCC></s:Body></s:Envelope>';
 };
 
+// helper to apply post options to http request
 SonyTV.prototype.getPostOptions = function (url) {
   var that = this;
   if (url == '') url = '/sony/IRCC';
@@ -792,6 +892,7 @@ SonyTV.prototype.getPostOptions = function (url) {
   return post_options;
 };
 
+// helper function to extract and store passcode cookie from header
 SonyTV.prototype.setCookie = function (headers) {
   var that = this;
   var setcookie = null;
@@ -810,6 +911,7 @@ SonyTV.prototype.setCookie = function (headers) {
   }
 };
 
+// helper function to save cookie to disk
 SonyTV.prototype.saveCookie = function (cookie) {
   const that = this;
   if (cookie != undefined && cookie != null && cookie.length > 0) { var fs = require('fs'); }
@@ -824,6 +926,7 @@ SonyTV.prototype.saveCookie = function (cookie) {
   });
 };
 
+// helper function to load cookie from disk
 SonyTV.prototype.loadCookie = function () {
   var that = this;
   var fs = require('fs');
@@ -841,6 +944,7 @@ function isNull (object) {
   return object == undefined || null;
 }
 
+// helper class to convert an input type strin to a hb InputSourceType
 function InputSource (name, type) {
   this.name = name;
   this.type = type;
