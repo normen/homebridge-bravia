@@ -79,7 +79,7 @@ Optional options (all inside one TV entry):
                       ]
       ```
   - `updaterate` interval in milliseconds for TV status updates (on/off etc), default `5000`
-  - `channelupdaterate` interval in milliseconds for updates of the channel list (default disabled - see below)
+  - `channelupdaterate` interval in milliseconds for updates of the channel/input list, default `30000`
   - `soundoutput` is your preferred TV sound output, can be `speaker` or `headphone`, default `speaker`
   - `port` is the IP port of your TV, default 80
   - `mac` is the MAC address of your TV, set it to use WOL instead of HTTP to wake up the TV, default none
@@ -97,7 +97,5 @@ The TV registers as a TV remote device in HomeKit and allows to use basic functi
 In addition to the iOS remote the plugin also exposes the TV speaker as a HomeKit accessory however only some apps show that accessory type, Apples Home app does not.
 
 ## Notes
-### Channel List
-If the channel list or the applications on the TV change the changes will be reflected on the next HomeBridge reboot. If you want "live" updates at the cost of some network bandwidth, set the `channelupdaterate` parameter, a minimum value of `10000` is suggested.
 ### Misc
 Thanks go out to "lombi" for his sony bravia homebridge plugin, which this plugin is heavily based on.

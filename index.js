@@ -63,6 +63,7 @@ function SonyTV (platform, config, accessory = null) {
   this.tvsource = config.tvsource || null;
   this.soundoutput = config.soundoutput || 'speaker';
   this.updaterate = config.updaterate || 5000;
+  this.channelupdaterate = config.channelupdaterate || 30000;
   this.starttimeout = config.starttimeout || 5000;
   this.comp = config.compatibilitymode;
   this.serverPort = config.serverPort || 8999;
@@ -351,7 +352,7 @@ SonyTV.prototype.receiveSources = function () {
     this.scannedChannels = [];
     this.receiveNextSources();
   }
-  if(this.config.channelupdaterate) setTimeout(this.receiveSources.bind(this), this.config.channelupdaterate);
+  if(this.channelupdaterate) setTimeout(this.receiveSources.bind(this), this.channelupdaterate);
 };
 // receive the next sources in the inputSourceList, register accessory if all have been received
 SonyTV.prototype.receiveNextSources = function () {
