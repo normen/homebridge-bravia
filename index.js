@@ -525,11 +525,12 @@ SonyTV.prototype.getActiveIdentifier = function (callback) {
 // homebridge callback to set current channel
 SonyTV.prototype.setActiveIdentifier = function (identifier, callback) {
   var inputSource = this.inputSourceMap[identifier];
-  if (inputSource && inputSource.testCharacteristic(Characteristic.InputSourceType) &&
-    inputSource.getCharacteristic(Characteristic.InputSourceType).value == Characteristic.InputSourceType.APPLICATION) {
-    this.setActiveApp(inputSource.subtype);
-  } else {
-    this.setPlayContent(inputSource.subtype);
+  if (inputSource && inputSource.testCharacteristic(Characteristic.InputSourceType)){
+    if(inputSource.getCharacteristic(Characteristic.InputSourceType).value == Characteristic.InputSourceType.APPLICATION) {
+      this.setActiveApp(inputSource.subtype);
+    } else {
+      this.setPlayContent(inputSource.subtype);
+    }
   }
   if (!isNull(callback)) callback(null, identifier);
 };
