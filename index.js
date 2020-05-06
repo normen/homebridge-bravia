@@ -226,7 +226,7 @@ SonyTV.prototype.checkRegistration = function () {
         var urlObject = url.parse(req.url, true, false);
         if (urlObject.query.pin) {
           res.writeHead(200, { 'Content-Type': 'text/html' });
-          res.write('<html><body>OK</body></html>');
+          res.write('<html><body>PIN ' + urlObject.query.pin + ' sent</body></html>');
           self.pwd = urlObject.query.pin;
           self.server.close();
           self.checkRegistration();
