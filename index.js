@@ -352,7 +352,7 @@ SonyTV.prototype.receiveSources = function () {
     this.scannedChannels = [];
     this.receiveNextSources();
   }
-  if(this.channelupdaterate) setTimeout(this.receiveSources.bind(this), this.channelupdaterate);
+  if (this.channelupdaterate) setTimeout(this.receiveSources.bind(this), this.channelupdaterate);
 };
 // receive the next sources in the inputSourceList, register accessory if all have been received
 SonyTV.prototype.receiveNextSources = function () {
