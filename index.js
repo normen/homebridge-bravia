@@ -270,25 +270,19 @@ SonyTV.prototype.addInputSource = function (name, uri, type) {
 };
 
 SonyTV.prototype.haveChannel = function (source) {
-  if (this.scannedChannels.find(function (channel) {
-    if ((source.subtype == channel[1]) &&
+  return this.scannedChannels.find(channel => (
+      (source.subtype == channel[1]) &&
       (source.getCharacteristic(Characteristic.InputSourceType).value == channel[2]) &&
-      (source.getCharacteristic(Characteristic.ConfiguredName).value == channel[0])) {
-      return true;
-    }
-  }) !== undefined) return true;
-  return false;
+      (source.getCharacteristic(Characteristic.ConfiguredName).value == channel[0])
+  )) !== undefined;
 };
 
 SonyTV.prototype.haveInputSource = function (name, uri, type) {
-  if (this.channelServices.find(function (source) {
-    if ((source.subtype == uri) &&
+  return this.channelServices.find(source => (
+      (source.subtype == uri) &&
       (source.getCharacteristic(Characteristic.InputSourceType).value == type) &&
-      (source.getCharacteristic(Characteristic.ConfiguredName).value == name)) {
-      return true;
-    }
-  }) !== undefined) return true;
-  return false;
+      (source.getCharacteristic(Characteristic.ConfiguredName).value == name)
+  )) !== undefined;
 };
 
 // syncs the channels and publishes/updates the TV accessory for HomeKit
