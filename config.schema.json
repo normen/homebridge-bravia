@@ -1,7 +1,7 @@
 {
   "pluginAlias": "BraviaPlatform",
   "pluginType": "platform",
-  "headerDisplay": "Please see this documentation for the first setup: https://github.com/normen/homebridge-bravia#installation",
+  "headerDisplay": " Go to [http://${{HOSTNAME}}:8999](http://${{HOSTNAME}}:8999) to enter the PIN when TV displays it",
   "footerDisplay": "For documentation please see https://github.com/normen/homebridge-bravia",
   "schema": {
     "tvs": {
@@ -20,7 +20,7 @@
           },
           "ip": {
             "title": "IP / Hostname",
-            "description": "The IP address or host name of your TV, find/set in your router",
+            "description": "The IP address or host name of your TV, find or set in your router",
             "type": "string",
             "required": true
           },
@@ -38,7 +38,7 @@
           },
           "mac": {
             "title": "MAC address",
-            "description": "MAC address of the TV, only required when using WOL",
+            "description": "MAC address of the TV, do not set unless you need to use WOL",
             "type": "string",
             "required": false
           },
@@ -66,7 +66,7 @@
           },
           "applications": {
             "title": "Listed Apps",
-            "description": "Leave empty to not list TV apps in the input list, add app names to show those apps",
+            "description": "Leave empty to not list TV apps in the input list, add app names to show those apps. A part of the name should suffice.",
             "type": "array",
             "items":{
               "name": "Listed App",
@@ -74,7 +74,6 @@
               "properties": {
                 "title": {
                   "title": "App Name",
-                  "description":"a part of the name should suffice",
                   "type": "string"
                 }
               }

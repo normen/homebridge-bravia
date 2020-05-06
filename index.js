@@ -460,7 +460,7 @@ SonyTV.prototype.pollPlayContent = function () {
     } else {
       try {
         var jason = JSON.parse(chunk);
-        if (!isNull(jason)) {
+        if (!isNull(jason) && jason.result) {
           var result = jason.result[0];
           var uri = result.uri;
           if (that.currentUri != uri) {
@@ -475,7 +475,7 @@ SonyTV.prototype.pollPlayContent = function () {
           }
         }
       } catch (e) {
-        that.log('Exception! ', e);
+        that.log('Can\'t poll play content', e);
       }
     }
   };
