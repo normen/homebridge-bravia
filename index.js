@@ -226,7 +226,7 @@ SonyTV.prototype.checkRegistration = function () {
         var urlObject = url.parse(req.url, true, false);
         if (urlObject.query.pin) {
           res.writeHead(200, { 'Content-Type': 'text/html' });
-          res.write('<html><body>OK</body></html>');
+          res.write('<html><body>PIN ' + urlObject.query.pin + ' sent</body></html>');
           self.pwd = urlObject.query.pin;
           self.server.close();
           self.checkRegistration();
@@ -270,25 +270,19 @@ SonyTV.prototype.addInputSource = function (name, uri, type) {
 };
 
 SonyTV.prototype.haveChannel = function (source) {
-  if (this.scannedChannels.find(function (channel) {
-    if ((source.subtype == channel[1]) &&
+  return this.scannedChannels.find(channel => (
+      (source.subtype == channel[1]) &&
       (source.getCharacteristic(Characteristic.InputSourceType).value == channel[2]) &&
-      (source.getCharacteristic(Characteristic.ConfiguredName).value == channel[0])) {
-      return true;
-    }
-  }) !== undefined) return true;
-  return false;
+      (source.getCharacteristic(Characteristic.ConfiguredName).value == channel[0])
+  )) !== undefined;
 };
 
 SonyTV.prototype.haveInputSource = function (name, uri, type) {
-  if (this.channelServices.find(function (source) {
-    if ((source.subtype == uri) &&
+  return this.channelServices.find(source => (
+      (source.subtype == uri) &&
       (source.getCharacteristic(Characteristic.InputSourceType).value == type) &&
-      (source.getCharacteristic(Characteristic.ConfiguredName).value == name)) {
-      return true;
-    }
-  }) !== undefined) return true;
-  return false;
+      (source.getCharacteristic(Characteristic.ConfiguredName).value == name)
+  )) !== undefined;
 };
 
 // syncs the channels and publishes/updates the TV accessory for HomeKit
@@ -352,7 +346,7 @@ SonyTV.prototype.receiveSources = function () {
     this.scannedChannels = [];
     this.receiveNextSources();
   }
-  if(this.channelupdaterate) setTimeout(this.receiveSources.bind(this), this.channelupdaterate);
+  if (this.channelupdaterate) setTimeout(this.receiveSources.bind(this), this.channelupdaterate);
 };
 // receive the next sources in the inputSourceList, register accessory if all have been received
 SonyTV.prototype.receiveNextSources = function () {
@@ -460,7 +454,7 @@ SonyTV.prototype.pollPlayContent = function () {
     } else {
       try {
         var jason = JSON.parse(chunk);
-        if (!isNull(jason)) {
+        if (!isNull(jason) && jason.result) {
           var result = jason.result[0];
           var uri = result.uri;
           if (that.currentUri != uri) {
@@ -475,7 +469,7 @@ SonyTV.prototype.pollPlayContent = function () {
           }
         }
       } catch (e) {
-        that.log('Exception! ', e);
+        that.log('Can\'t poll play content', e);
       }
     }
   };
@@ -525,11 +519,12 @@ SonyTV.prototype.getActiveIdentifier = function (callback) {
 // homebridge callback to set current channel
 SonyTV.prototype.setActiveIdentifier = function (identifier, callback) {
   var inputSource = this.inputSourceMap[identifier];
-  if (inputSource && inputSource.testCharacteristic(Characteristic.InputSourceType) &&
-    inputSource.getCharacteristic(Characteristic.InputSourceType).value == Characteristic.InputSourceType.APPLICATION) {
-    this.setActiveApp(inputSource.subtype);
-  } else {
-    this.setPlayContent(inputSource.subtype);
+  if (inputSource && inputSource.testCharacteristic(Characteristic.InputSourceType)){
+    if(inputSource.getCharacteristic(Characteristic.InputSourceType).value == Characteristic.InputSourceType.APPLICATION) {
+      this.setActiveApp(inputSource.subtype);
+    } else {
+      this.setPlayContent(inputSource.subtype);
+    }
   }
   if (!isNull(callback)) callback(null, identifier);
 };
