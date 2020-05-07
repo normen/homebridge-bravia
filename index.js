@@ -59,6 +59,7 @@ function SonyTV (platform, config, accessory = null) {
   this.name = config.name;
   this.ip = config.ip;
   this.mac = config.mac || null;
+  this.woladdress = config.woladdress || "255.255.255.255"
   this.port = config.port || '80';
   this.tvsource = config.tvsource || null;
   this.soundoutput = config.soundoutput || 'speaker';
@@ -782,7 +783,7 @@ SonyTV.prototype.setPowerState = function (state, callback) {
   };
   if (state) {
     if (!isNull(this.mac)) {
-      wol.wake(this.mac, onWol);
+      wol.wake(this.mac, {address:this.woladdress}, onWol);
     } else {
       var post_data = '{"id":2,"method":"setPowerStatus","version":"1.0","params":[{"status":true}]}';
       that.makeHttpRequest(onError, onSucces, '/sony/system/', post_data, false);
