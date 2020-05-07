@@ -82,7 +82,8 @@ Optional options (all inside one TV entry):
   - `channelupdaterate` interval in milliseconds for updates of the channel/input list, default `30000`
   - `soundoutput` is your preferred TV sound output, can be `speaker` or `headphone`, default `speaker`
   - `port` is the IP port of your TV, default 80
-  - `mac` is the MAC address of your TV, set it to use WOL instead of HTTP to wake up the TV, default none
+  - `mac` is the MAC address of your TV, only set it if you want to use WOL instead of HTTP to wake up the TV, default none
+  - `woladdress` sets the subnet for WOL, default `255.255.255.255`
   - `serverPort` sets a different port than `8999` for the web server that allows entering the PIN number from the TV
 
 ## Usage
