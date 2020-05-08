@@ -87,7 +87,7 @@ function SonyTV (platform, config, accessory = null) {
 
   this.currentUri = null;
   this.currentMediaState = Characteristic.TargetMediaState.STOP; // TODO
-  this.uriToInputSource = [];
+  this.uriToInputSource = new Map();
 
   this.loadCookie();
 
@@ -135,7 +135,7 @@ SonyTV.prototype.grabServices = function (accessory) {
     if ((service.subtype !== undefined) && service.testCharacteristic(Characteristic.Identifier)) {
       var identifier = service.getCharacteristic(Characteristic.Identifier).value;
       self.inputSourceMap.set(identifier, service);
-      self.uriToInputSource[service.subtype] = service;
+      self.uriToInputSource.set(service.subtype, service);
       self.channelServices.push(service);
     }
   });
@@ -269,7 +269,7 @@ SonyTV.prototype.addInputSource = function (name, uri, type) {
  	  .setCharacteristic(Characteristic.InputSourceType, type);
   this.channelServices.push(inputSource);
   this.tvService.addLinkedService(inputSource);
-  this.uriToInputSource[uri] = inputSource;
+  this.uriToInputSource.set(uri, inputSource);
   this.inputSourceMap.set(identifier, inputSource);
   this.accessory.addService(inputSource);
   this.log('Added input ' + name);// +" with URI "+uri);
@@ -308,6 +308,8 @@ SonyTV.prototype.syncAccessory = function () {
       // TODO: make this function?
       self.tvService.removeLinkedService(service);
       self.accessory.removeService(service);
+      self.inputSourceMap.delete(service.getCharacteristic(Characteristic.Identifier).value);
+      self.uriToInputSource.delete(service.subtype);
       self.log('Removing nonexisting channel ' + service.getCharacteristic(Characteristic.ConfiguredName).value);
       obj.splice(idx, 1);
       changeDone = true;
@@ -465,7 +467,7 @@ SonyTV.prototype.pollPlayContent = function () {
           var uri = result.uri;
           if (that.currentUri != uri) {
             that.currentUri = uri;
-            var inputSource = that.uriToInputSource[uri];
+            var inputSource = that.uriToInputSource.get(uri);
             if (inputSource) {
               var id = inputSource.getCharacteristic(Characteristic.Identifier).value;
               if (!isNull(inputSource)) {
@@ -510,7 +512,7 @@ SonyTV.prototype.setActiveApp = function (uri) {
 SonyTV.prototype.getActiveIdentifier = function (callback) {
   var uri = this.currentUri;
   if (!isNull(uri)) {
-    var inputSource = this.uriToInputSource[uri];
+    var inputSource = this.uriToInputSource.get(uri);
     if (inputSource) {
       var id = inputSource.getCharacteristic(Characteristic.Identifier).value;
       if (!isNull(inputSource)) {
