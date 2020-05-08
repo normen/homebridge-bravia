@@ -83,7 +83,7 @@ function SonyTV (platform, config, accessory = null) {
   this.power = false;
 
   this.inputSourceList = [];
-  this.inputSourceMap = [];
+  this.inputSourceMap = new Map();
 
   this.currentUri = null;
   this.currentMediaState = Characteristic.TargetMediaState.STOP; // TODO
@@ -134,7 +134,7 @@ SonyTV.prototype.grabServices = function (accessory) {
   accessory.services.forEach(service => {
     if ((service.subtype !== undefined) && service.testCharacteristic(Characteristic.Identifier)) {
       var identifier = service.getCharacteristic(Characteristic.Identifier).value;
-      self.inputSourceMap[identifier] = service;
+      self.inputSourceMap.set(identifier, service);
       self.uriToInputSource[service.subtype] = service;
       self.channelServices.push(service);
     }
@@ -270,7 +270,7 @@ SonyTV.prototype.addInputSource = function (name, uri, type) {
   this.channelServices.push(inputSource);
   this.tvService.addLinkedService(inputSource);
   this.uriToInputSource[uri] = inputSource;
-  this.inputSourceMap[identifier] = inputSource;
+  this.inputSourceMap.set(identifier, inputSource);
   this.accessory.addService(inputSource);
   this.log('Added input ' + name);// +" with URI "+uri);
 };
@@ -524,7 +524,7 @@ SonyTV.prototype.getActiveIdentifier = function (callback) {
 
 // homebridge callback to set current channel
 SonyTV.prototype.setActiveIdentifier = function (identifier, callback) {
-  var inputSource = this.inputSourceMap[identifier];
+  var inputSource = this.inputSourceMap.get(identifier);
   if (inputSource && inputSource.testCharacteristic(Characteristic.InputSourceType)){
     if(inputSource.getCharacteristic(Characteristic.InputSourceType).value == Characteristic.InputSourceType.APPLICATION) {
       this.setActiveApp(inputSource.subtype);
