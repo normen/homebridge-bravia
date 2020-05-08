@@ -1,7 +1,7 @@
 {
   "pluginAlias": "BraviaPlatform",
   "pluginType": "platform",
-  "headerDisplay": " Go to [http://${{HOSTNAME}}:8999](http://${{HOSTNAME}}:8999) to enter the PIN when TV displays it",
+  "headerDisplay": "Go to [http://${{HOSTNAME}}:8999](http://${{HOSTNAME}}:8999) to enter the PIN when your TV displays it",
   "footerDisplay": "For documentation please see https://github.com/normen/homebridge-bravia",
   "schema": {
     "tvs": {
