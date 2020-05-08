@@ -87,7 +87,6 @@ function SonyTV (platform, config, accessory = null) {
 
   this.currentUri = null;
   this.currentMediaState = Characteristic.TargetMediaState.STOP; // TODO
-  this.inputSourceCount = 1;
   this.uriToInputSource = [];
 
   this.loadCookie();
@@ -112,6 +111,16 @@ function SonyTV (platform, config, accessory = null) {
   }
 }
 
+// get free channel identifier
+SonyTV.prototype.getFreeIdentifier = function () {
+  var id = 1;
+  var keys = [...this.inputSourceMap.keys()];
+  while(keys.includes(id)){
+    id++;
+  }
+  return id;
+}
+
 // start checking for registration and start polling status
 SonyTV.prototype.start = function () {
   this.checkRegistration();
@@ -128,10 +137,6 @@ SonyTV.prototype.grabServices = function (accessory) {
       self.inputSourceMap[identifier] = service;
       self.uriToInputSource[service.subtype] = service;
       self.channelServices.push(service);
-      // restore input source count
-      if (self.inputSourceCount <= identifier) {
-        self.inputSourceCount = identifier + 1;
-      }
     }
   });
   this.services = [];
@@ -255,8 +260,9 @@ SonyTV.prototype.checkRegistration = function () {
 SonyTV.prototype.addInputSource = function (name, uri, type) {
   const that = this;
   // FIXME: Using subtype to store URI, hack!
+  const identifier = this.getFreeIdentifier();
   var inputSource = new Service.InputSource(name, uri); // displayname, subtype?
-  inputSource.setCharacteristic(Characteristic.Identifier, that.inputSourceCount)
+  inputSource.setCharacteristic(Characteristic.Identifier, identifier)
  	  .setCharacteristic(Characteristic.ConfiguredName, name)
  	  .setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN)
     .setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
@@ -264,8 +270,7 @@ SonyTV.prototype.addInputSource = function (name, uri, type) {
   this.channelServices.push(inputSource);
   this.tvService.addLinkedService(inputSource);
   this.uriToInputSource[uri] = inputSource;
-  this.inputSourceMap[this.inputSourceCount] = inputSource;
-  this.inputSourceCount++;
+  this.inputSourceMap[identifier] = inputSource;
   this.accessory.addService(inputSource);
   this.log('Added input ' + name);// +" with URI "+uri);
 };
