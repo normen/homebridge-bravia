@@ -64,7 +64,7 @@ function SonyTV (platform, config, accessory = null) {
   this.tvsource = config.tvsource || null;
   this.soundoutput = config.soundoutput || 'speaker';
   this.updaterate = config.updaterate || 5000;
-  this.channelupdaterate = config.channelupdaterate || 30000;
+  this.channelupdaterate = config.channelupdaterate === undefined?30000:config.channelupdaterate;
   this.starttimeout = config.starttimeout || 5000;
   this.comp = config.compatibilitymode;
   this.serverPort = config.serverPort || 8999;
