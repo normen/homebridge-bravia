@@ -278,16 +278,14 @@ SonyTV.prototype.addInputSource = function (name, uri, type) {
 SonyTV.prototype.haveChannel = function (source) {
   return this.scannedChannels.find(channel => (
       (source.subtype == channel[1]) &&
-      (source.getCharacteristic(Characteristic.InputSourceType).value == channel[2]) &&
-      (source.getCharacteristic(Characteristic.ConfiguredName).value == channel[0])
+      (source.getCharacteristic(Characteristic.InputSourceType).value == channel[2])
   )) !== undefined;
 };
 
 SonyTV.prototype.haveInputSource = function (name, uri, type) {
   return this.channelServices.find(source => (
       (source.subtype == uri) &&
-      (source.getCharacteristic(Characteristic.InputSourceType).value == type) &&
-      (source.getCharacteristic(Characteristic.ConfiguredName).value == name)
+      (source.getCharacteristic(Characteristic.InputSourceType).value == type)
   )) !== undefined;
 };
 
