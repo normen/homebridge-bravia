@@ -104,7 +104,7 @@ function SonyTV (platform, config, accessory = null) {
     this.log('Creating new accessory for ' + this.name);
     this.accessory = new Accessory(this.name, uuid);
     this.accessory.context.config = config;
-    this.accessory.context.uuid = uuid;
+    this.accessory.context.uuid = uuidv4();
     this.log('New TV ' + this.name + ', will be queried for channels/apps and added to HomeKit');
     this.createServices();
     this.applyCallbacks();
@@ -944,6 +944,13 @@ SonyTV.prototype.loadCookie = function () {
 
 function isNull (object) {
   return object == undefined || null;
+}
+
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
 }
 
 // helper class to convert an input type strin to a hb InputSourceType
