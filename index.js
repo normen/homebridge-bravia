@@ -336,9 +336,9 @@ SonyTV.prototype.syncAccessory = function () {
   }
 };
 
-// initialize a scan for new sources, currently only called when starting the plugin
+// initialize a scan for new sources
 SonyTV.prototype.receiveSources = function () {
-  if (!this.receivingSources) {
+  if (!this.receivingSources && this.power) {
     const that = this;
     this.inputSourceList = [];
     this.sources.forEach(function (sourceName) {
