@@ -99,7 +99,7 @@ In addition to the iOS remote the plugin also exposes the TV speaker as a HomeKi
 
 ## Development
 If you want new features or improve the plugin, you're very welcome to do so. The projects `devDependencies` include homebridge and the `npm run test` command has been adapted so that you can run a test instance of homebridge during development. 
-## Setup
+#### Setup
 - clone github repo
 - `npm install` in the project folder
 - create `.homebridge` folder in project root
