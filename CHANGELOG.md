@@ -1,5 +1,10 @@
-# Changelog
+# Changelog for homebridge-bravia
+This is the change log for the plugin, all relevant changes will be listed here.
 
+For documentation please see the [README](https://github.com/normen/homebridge-bravia/blob/master/README.md)
+## 2.2.0
+- cleanups
+- add changelog
 ## 2.1.11
 - fix error when plugin is started without config (old homebridge)
 ## 2.1.10

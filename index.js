@@ -219,7 +219,7 @@ SonyTV.prototype.checkRegistration = function () {
   const self = this;
   this.registercheck = true;
   var clientId = 'HomeBridge-Bravia' + ':' + this.accessory.context.uuid;
-  var post_data = '{"id":8,"method":"actRegister","version":"1.0","params":[{"clientid":"' + clientId + '","nickname":"homebridge"},[{"clientid":"HomeBridge:34c48639-af3d-40e7-b1b2-74091375368c","value":"yes","nickname":"homebridge","function":"WOL"}]]}';
+  var post_data = '{"id":8,"method":"actRegister","version":"1.0","params":[{"clientid":"' + clientId + '","nickname":"homebridge"},[{"clientid":"' + clientId + '","value":"yes","nickname":"homebridge","function":"WOL"}]]}';
   var onError = function (err) {
     self.log('Error: ', err);
     return false;
