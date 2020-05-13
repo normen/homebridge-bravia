@@ -82,7 +82,7 @@
           },
           "sources": {
             "title": "Source",
-            "description":"Defaults to: extInput:hdmi, extInput:component, extInput:scart, extInput:cec, extInput:widi, add entries to the list below to only show those inputs.",
+            "description":"Defaults to: [extInput:hdmi, extInput:component, extInput:scart, extInput:cec, extInput:widi]. Adding entries to the list below will only show those inputs.",
             "type": "array",
             "required": false,
             "items":{
