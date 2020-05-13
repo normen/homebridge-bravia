@@ -97,6 +97,15 @@ The TV registers as a TV remote device in HomeKit and allows to use basic functi
 #### TV Speaker
 In addition to the iOS remote the plugin also exposes the TV speaker as a HomeKit accessory however only some apps show that accessory type, Apples Home app does not.
 
+## Development
+If you want new features or improve the plugin, you're very welcome to do so. The projects `devDependencies` include homebridge and the `npm run test` command has been adapted so that you can run a test instance of homebridge during development. 
+## Setup
+- clone github repo
+- `npm install` in the project folder
+- create `.homebridge` folder in project root
+- add `config.json` with appropriate content to `.homebridge` folder
+- run `npm run test` to start the homebridge instance for testing
+
 ## Notes
 ### Misc
 Thanks go out to "lombi" for his sony bravia homebridge plugin, which this plugin is heavily based on.
