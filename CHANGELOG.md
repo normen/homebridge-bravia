@@ -5,6 +5,8 @@ For documentation please see the [README](https://github.com/normen/homebridge-b
 ## 2.2.0
 - cleanups
 - add changelog
+- add development info
+- fix client ID issue for waking up TV
 ## 2.1.11
 - fix error when plugin is started without config (old homebridge)
 ## 2.1.10

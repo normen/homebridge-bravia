@@ -25,26 +25,27 @@
             "required": true
           },
           "port": {
-            "title": "Port number",
-            "description": "HTTP port of the TV, usually not required",
+            "title": "Port",
+            "description": "HTTP port of the TV",
+            "placeholder": "80",
             "type": "number",
             "required": false
           },
           "serverPort": {
             "title": "PIN entry server port",
-            "description": "HTTP port of the web server that is started for PIN entry, default 8999",
+            "placeholder": "8999",
             "type": "number",
             "required": false
           },
           "mac": {
             "title": "MAC address",
-            "description": "MAC address of the TV, do not set unless you need to use WOL",
+            "description": "DO NOT set unless you need to use WOL",
             "type": "string",
             "required": false
           },
           "soundoutput": {
             "title": "Sound Output",
-            "description": "Usually speaker or headphone",
+            "description": "Required for volume control",
             "type": "string",
             "default": "speaker",
             "oneOf": [
@@ -65,11 +66,10 @@
             "required": false
           },
           "applications": {
-            "title": "Listed Apps",
+            "title": "App",
             "description": "Leave empty to not list TV apps in the input list, add app names to show those apps. A part of the name should suffice.",
             "type": "array",
             "items":{
-              "name": "Listed App",
               "type": "object",
               "properties": {
                 "title": {
@@ -81,7 +81,7 @@
             "required": false
           },
           "sources": {
-            "title": "Listed Sources",
+            "title": "Source",
             "description":"Defaults to: extInput:hdmi, extInput:component, extInput:scart, extInput:cec, extInput:widi, add entries to the list below to only show those inputs.",
             "type": "array",
             "required": false,
