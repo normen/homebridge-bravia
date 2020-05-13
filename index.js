@@ -9,6 +9,7 @@ var debug = false;
 var Service, Characteristic, Accessory, UUIDGen, STORAGE_PATH;
 
 function BraviaPlatform (log, config, api) {
+  if(!config || !api) return;
   this.log = log;
   this.config = config;
   debug = config.debug;
