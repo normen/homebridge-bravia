@@ -58,7 +58,8 @@ Required options:
   - `ip` is the IP address or host name of your TV, find and/or set it through your router or set it in the TV
 
 Optional options (all inside one TV entry):
-  - `sources` is an array of sources to display in HomeKit, default `["extInput:hdmi", "extInput:component", "extInput:scart", "extInput:cec", "extInput:widi"]`
+  - `sources` is an array of sources to display in HomeKit
+    - default `["extInput:hdmi", "extInput:component", "extInput:scart", "extInput:cec", "extInput:widi"]`
     - these sources usually represent a type of input, so `extInput:hdmi` will show all your HDMI inputs in HomeKit
     - source strings for your TV might look different, check the web if you find the right ones for your TV/input types
   - `tvsource` is your preferred TV source, can be `tv:dvbt`, `tv:dvbc` or `tv:dvbs` (antenna, cable or sat), default none
