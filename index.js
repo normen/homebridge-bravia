@@ -9,7 +9,7 @@ var debug = false;
 var Service, Characteristic, Accessory, UUIDGen, STORAGE_PATH;
 
 function BraviaPlatform (log, config, api) {
-  if(!config || !api) return;
+  if (!config || !api) return;
   this.log = log;
   this.config = config;
   debug = config.debug;
@@ -60,12 +60,12 @@ function SonyTV (platform, config, accessory = null) {
   this.name = config.name;
   this.ip = config.ip;
   this.mac = config.mac || null;
-  this.woladdress = config.woladdress || "255.255.255.255"
+  this.woladdress = config.woladdress || '255.255.255.255';
   this.port = config.port || '80';
   this.tvsource = config.tvsource || null;
   this.soundoutput = config.soundoutput || 'speaker';
   this.updaterate = config.updaterate || 5000;
-  this.channelupdaterate = config.channelupdaterate === undefined?30000:config.channelupdaterate;
+  this.channelupdaterate = config.channelupdaterate === undefined ? 30000 : config.channelupdaterate;
   this.starttimeout = config.starttimeout || 5000;
   this.comp = config.compatibilitymode;
   this.serverPort = config.serverPort || 8999;
@@ -116,11 +116,11 @@ function SonyTV (platform, config, accessory = null) {
 SonyTV.prototype.getFreeIdentifier = function () {
   var id = 1;
   var keys = [...this.inputSourceMap.keys()];
-  while(keys.includes(id)){
+  while (keys.includes(id)) {
     id++;
   }
   return id;
-}
+};
 
 // start checking for registration and start polling status
 SonyTV.prototype.start = function () {
@@ -225,7 +225,7 @@ SonyTV.prototype.checkRegistration = function () {
     return false;
   };
   var onSucces = function (chunk) {
-    if (chunk.indexOf('error') >= 0) { if (debug) self.log('Error? ', chunk); }
+    if (chunk.indexOf('"error"') >= 0) { if (debug) self.log('Error? ', chunk); }
     if (chunk.indexOf('[]') < 0) {
       self.log('Need to authenticate with TV!');
       self.log('Please enter the PIN that appears on your TV at http://' + os.hostname() + ':' + self.serverPort);
@@ -278,14 +278,14 @@ SonyTV.prototype.addInputSource = function (name, uri, type) {
 
 SonyTV.prototype.haveChannel = function (source) {
   return this.scannedChannels.find(channel => (
-      (source.subtype == channel[1]) &&
+    (source.subtype == channel[1]) &&
       (source.getCharacteristic(Characteristic.InputSourceType).value == channel[2])
   )) !== undefined;
 };
 
 SonyTV.prototype.haveInputSource = function (name, uri, type) {
   return this.channelServices.find(source => (
-      (source.subtype == uri) &&
+    (source.subtype == uri) &&
       (source.getCharacteristic(Characteristic.InputSourceType).value == type)
   )) !== undefined;
 };
@@ -383,13 +383,13 @@ SonyTV.prototype.receiveSource = function (sourceName, sourceType) {
   };
   var onSucces = function (data) {
     try {
-      if (data.indexOf('error') < 0) {
+      if (data.indexOf('"error"') < 0) {
         var jayons = JSON.parse(data);
         var reslt = jayons.result[0];
         reslt.forEach(function (source) {
           that.scannedChannels.push([source.title, source.uri, sourceType]);
         });
-      } else {
+      } else if(debug) {
         that.log('Can\'t load sources for ' + sourceName);
         that.log('TV response:');
         that.log(data);
@@ -414,7 +414,7 @@ SonyTV.prototype.receiveApplications = function () {
   };
   var onSucces = function (data) {
     try {
-      if (data.indexOf('error') < 0) {
+      if (data.indexOf('"error"') < 0) {
         var jayons = JSON.parse(data);
         var reslt = jayons.result[0];
         reslt.sort(source => source.title).forEach(function (source) {
@@ -424,7 +424,7 @@ SonyTV.prototype.receiveApplications = function () {
             //            that.log('Ignoring application: ' + source.title);
           }
         });
-      } else {
+      } else if(debug){
         that.log('Can\'t load applications.');
         that.log('TV response:');
         that.log(data);
@@ -452,7 +452,7 @@ SonyTV.prototype.pollPlayContent = function () {
     }
   };
   var onSucces = function (chunk) {
-    if (chunk.indexOf('error') >= 0) {
+    if (chunk.indexOf('"error"') >= 0) {
       // happens when TV display is off
       if (!isNull(that.currentUri)) {
         that.currentUri = null;
@@ -526,8 +526,8 @@ SonyTV.prototype.getActiveIdentifier = function (callback) {
 // homebridge callback to set current channel
 SonyTV.prototype.setActiveIdentifier = function (identifier, callback) {
   var inputSource = this.inputSourceMap.get(identifier);
-  if (inputSource && inputSource.testCharacteristic(Characteristic.InputSourceType)){
-    if(inputSource.getCharacteristic(Characteristic.InputSourceType).value == Characteristic.InputSourceType.APPLICATION) {
+  if (inputSource && inputSource.testCharacteristic(Characteristic.InputSourceType)) {
+    if (inputSource.getCharacteristic(Characteristic.InputSourceType).value == Characteristic.InputSourceType.APPLICATION) {
       this.setActiveApp(inputSource.subtype);
     } else {
       this.setPlayContent(inputSource.subtype);
@@ -629,7 +629,7 @@ SonyTV.prototype.getMuted = function (callback) {
     if (!isNull(callback)) callback(null, false);
   };
   var onSucces = function (chunk) {
-    if (chunk.indexOf('error') >= 0) {
+    if (chunk.indexOf('"error"') >= 0) {
       if (debug) that.log('Error? ', chunk);
       if (!isNull(callback)) callback(null, false);
       return;
@@ -672,7 +672,7 @@ SonyTV.prototype.setMuted = function (muted, callback) {
     if (!isNull(callback)) callback(null, 0);
   };
   var onSucces = function (chunk) {
-    if (chunk.indexOf('error') >= 0) { that.log('Error? ', chunk); }
+    if (chunk.indexOf('"error"') >= 0) { if(debug) that.log('Error? ', chunk); }
     if (!isNull(callback)) callback(null, muted);
   };
   that.makeHttpRequest(onError, onSucces, '/sony/audio/', post_data, false);
@@ -691,7 +691,7 @@ SonyTV.prototype.getVolume = function (callback) {
     if (!isNull(callback)) callback(null, 0);
   };
   var onSucces = function (chunk) {
-    if (chunk.indexOf('error') >= 0) {
+    if (chunk.indexOf('"error"') >= 0) {
       if (debug) that.log('Error? ', chunk);
       if (!isNull(callback)) callback(null, 0);
       return;
@@ -789,7 +789,7 @@ SonyTV.prototype.setPowerState = function (state, callback) {
   };
   if (state) {
     if (!isNull(this.mac)) {
-      wol.wake(this.mac, {address:this.woladdress}, onWol);
+      wol.wake(this.mac, { address: this.woladdress }, onWol);
     } else {
       var post_data = '{"id":2,"method":"setPowerStatus","version":"1.0","params":[{"status":true}]}';
       that.makeHttpRequest(onError, onSucces, '/sony/system/', post_data, false);
@@ -947,9 +947,9 @@ function isNull (object) {
   return object == undefined || null;
 }
 
-function uuidv4() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+function uuidv4 () {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    var r = Math.random() * 16 | 0; var v = c == 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
 }
