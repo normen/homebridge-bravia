@@ -225,7 +225,7 @@ SonyTV.prototype.checkRegistration = function () {
     return false;
   };
   var onSucces = function (chunk) {
-    if (chunk.indexOf('error') >= 0) { if (debug) self.log('Error? ', chunk); }
+    if (chunk.indexOf('"error"') >= 0) { if (debug) self.log('Error? ', chunk); }
     if (chunk.indexOf('[]') < 0) {
       self.log('Need to authenticate with TV!');
       self.log('Please enter the PIN that appears on your TV at http://' + os.hostname() + ':' + self.serverPort);
@@ -383,13 +383,13 @@ SonyTV.prototype.receiveSource = function (sourceName, sourceType) {
   };
   var onSucces = function (data) {
     try {
-      if (data.indexOf('error') < 0) {
+      if (data.indexOf('"error"') < 0) {
         var jayons = JSON.parse(data);
         var reslt = jayons.result[0];
         reslt.forEach(function (source) {
           that.scannedChannels.push([source.title, source.uri, sourceType]);
         });
-      } else {
+      } else if(debug) {
         that.log('Can\'t load sources for ' + sourceName);
         that.log('TV response:');
         that.log(data);
@@ -414,7 +414,7 @@ SonyTV.prototype.receiveApplications = function () {
   };
   var onSucces = function (data) {
     try {
-      if (data.indexOf('error') < 0) {
+      if (data.indexOf('"error"') < 0) {
         var jayons = JSON.parse(data);
         var reslt = jayons.result[0];
         reslt.sort(source => source.title).forEach(function (source) {
@@ -424,7 +424,7 @@ SonyTV.prototype.receiveApplications = function () {
             //            that.log('Ignoring application: ' + source.title);
           }
         });
-      } else {
+      } else if(debug){
         that.log('Can\'t load applications.');
         that.log('TV response:');
         that.log(data);
@@ -452,7 +452,7 @@ SonyTV.prototype.pollPlayContent = function () {
     }
   };
   var onSucces = function (chunk) {
-    if (chunk.indexOf('error') >= 0) {
+    if (chunk.indexOf('"error"') >= 0) {
       // happens when TV display is off
       if (!isNull(that.currentUri)) {
         that.currentUri = null;
@@ -629,7 +629,7 @@ SonyTV.prototype.getMuted = function (callback) {
     if (!isNull(callback)) callback(null, false);
   };
   var onSucces = function (chunk) {
-    if (chunk.indexOf('error') >= 0) {
+    if (chunk.indexOf('"error"') >= 0) {
       if (debug) that.log('Error? ', chunk);
       if (!isNull(callback)) callback(null, false);
       return;
@@ -672,7 +672,7 @@ SonyTV.prototype.setMuted = function (muted, callback) {
     if (!isNull(callback)) callback(null, 0);
   };
   var onSucces = function (chunk) {
-    if (chunk.indexOf('error') >= 0) { that.log('Error? ', chunk); }
+    if (chunk.indexOf('"error"') >= 0) { if(debug) that.log('Error? ', chunk); }
     if (!isNull(callback)) callback(null, muted);
   };
   that.makeHttpRequest(onError, onSucces, '/sony/audio/', post_data, false);
@@ -691,7 +691,7 @@ SonyTV.prototype.getVolume = function (callback) {
     if (!isNull(callback)) callback(null, 0);
   };
   var onSucces = function (chunk) {
-    if (chunk.indexOf('error') >= 0) {
+    if (chunk.indexOf('"error"') >= 0) {
       if (debug) that.log('Error? ', chunk);
       if (!isNull(callback)) callback(null, 0);
       return;
