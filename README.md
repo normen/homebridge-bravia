@@ -21,7 +21,7 @@ This plugin requires iOS 12.2, to use it with previous iOS versions install vers
 - Install this plugin (e.g. using `npm install -g homebridge-bravia`)
 - Configure the plugin settings through config.json or web UI (see below for the options)
 - Turn on the TV
-- Set "Remote start" to ON in your TV Settings->Network->Remote Start
+- Set "Remote start" to ON in your TV Settings->Network->Remote Start (not required)
 - Restart Homebridge
 - The TV will display a PIN
 - Enter the PIN at `http://homebridge.local:8999`
@@ -78,7 +78,7 @@ Optional options (all inside one TV entry):
                       ]
       ```
   - `soundoutput` is your preferred TV sound output, can be `speaker` or `headphone`, default `speaker`
-  - `port` is the IP port of your TV, default 80
+  - `port` is the HTTP port of your TV, default 80
   - `mac` is the MAC address of your TV, only set it if you want to use WOL instead of HTTP to wake up the TV, default none
   - `woladdress` sets the subnet for WOL, default `255.255.255.255`
   - `serverPort` sets a different port than `8999` for the web server that allows entering the PIN number from the TV
