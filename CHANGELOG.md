@@ -3,6 +3,9 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-bravia/blob/master/README.md)
 
+## 2.2.3
+- hide more warnings
+
 ## 2.2.2
 - README updates
 - only log warnings when in debug mode

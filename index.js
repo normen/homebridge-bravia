@@ -377,8 +377,8 @@ SonyTV.prototype.receiveNextSources = function () {
 SonyTV.prototype.receiveSource = function (sourceName, sourceType) {
   const that = this;
   var onError = function (err) {
-    that.log('Error loading sources for ' + sourceName);
-    that.log(err);
+    if(debug) that.log('Error loading sources for ' + sourceName);
+    if(debug) that.log(err);
     that.receiveNextSources();
   };
   var onSucces = function (data) {
@@ -395,7 +395,7 @@ SonyTV.prototype.receiveSource = function (sourceName, sourceType) {
         that.log(data);
       }
     } catch (e) {
-      that.log(e);
+      if(debug) that.log(e);
     }
     that.receiveNextSources();
   };
@@ -407,8 +407,8 @@ SonyTV.prototype.receiveSource = function (sourceName, sourceType) {
 SonyTV.prototype.receiveApplications = function () {
   const that = this;
   var onError = function (err) {
-    that.log('Error loading applications:');
-    that.log(err);
+    if(debug) that.log('Error loading applications:');
+    if(debug) that.log(err);
     that.receivingSources = false;
     that.syncAccessory();
   };
@@ -430,7 +430,7 @@ SonyTV.prototype.receiveApplications = function () {
         that.log(data);
       }
     } catch (e) {
-      that.log(e);
+      if(debug) that.log(e);
     }
     that.receivingSources = false;
     that.syncAccessory();
@@ -476,7 +476,11 @@ SonyTV.prototype.pollPlayContent = function () {
           }
         }
       } catch (e) {
-        that.log('Can\'t poll play content', e);
+        if (!isNull(that.currentUri)) {
+          that.currentUri = null;
+          that.tvService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(0);
+        }
+        if(debug) that.log('Can\'t poll play content', e);
       }
     }
   };
