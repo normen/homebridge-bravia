@@ -91,13 +91,15 @@
             },
             "model": {
               "title": "Model Name",
-              "description":"Customise the model name/number displayed in HomeKit",
+              "description":"Customise the model name/number displayed in HomeKit. Defaults to Default-Model.",
+              "placeholder": "Sony Model Number eg. KDL32W600D",
               "type": "string",
               "required": false
             },
             "serial": {
               "title": "Serial Number",
-              "description":"Customise the serial number displayed in HomeKit",
+              "description":"Customise the serial number displayed in HomeKit. Defaults to Default-SerialNumber.",
+              "placeholder": "Serial Number",
               "type": "string",
               "required": false
             }
