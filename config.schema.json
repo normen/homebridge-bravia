@@ -88,6 +88,18 @@
             "items":{
               "title": "Source Name",
               "type": "string"
+            },
+            "model": {
+              "title": "Model Name",
+              "description":"Customise the model name/number displayed in HomeBridge",
+              "type": "string",
+              "required": false
+            },
+            "serial": {
+              "title": "Serial Number",
+              "description":"Customise the serial number displayed in HomeBridge",
+              "type": "string",
+              "required": false
             }
           }
         }
