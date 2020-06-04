@@ -108,7 +108,7 @@ function SonyTV (platform, config, accessory = null) {
     this.accessory = new Accessory(this.name, uuid);
     this.accessory.context.config = config;
     this.accessory.context.uuid = uuidv4();
-    this.log('New TV ' + this.name + ', will be queried for channels/apps and added to HomeKit');
+    this.log('New TV ' + this.name + '(Sony: ' + this.model + '), will be queried for channels/apps and added to HomeKit');
     this.createServices();
     this.applyCallbacks();
   }
