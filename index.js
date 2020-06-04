@@ -160,11 +160,11 @@ SonyTV.prototype.createServices = function () {
   this.services.push(this.speakerService);
   var informationService = new Service.AccessoryInformation();
   informationService.setCharacteristic(Characteristic.Manufacturer, "Sony");	
-  if(config.model) {
-     informationService.setCharacteristic(Characteristic.Model, config.model);
+  if(this.model) {
+     informationService.setCharacteristic(Characteristic.Model, this.model);
   }
-  if(config.serial) {
-     informationService.setCharacteristic(Characteristic.Model, config.serial);
+  if(this.serial) {
+     informationService.setCharacteristic(Characteristic.Model, this.serial);
   }
   this.services.push(informationService);
   return this.services;
