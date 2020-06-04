@@ -91,13 +91,13 @@
             },
             "model": {
               "title": "Model Name",
-              "description":"Customise the model name/number displayed in HomeBridge",
+              "description":"Customise the model name/number displayed in HomeKit",
               "type": "string",
               "required": false
             },
             "serial": {
               "title": "Serial Number",
-              "description":"Customise the serial number displayed in HomeBridge",
+              "description":"Customise the serial number displayed in HomeKit",
               "type": "string",
               "required": false
             }
@@ -131,7 +131,9 @@
         {
           "key":"tvs[].sources",
           "items":["tvs[].sources[]"]
-        }
+        },
+        "tvs[].model",
+        "tvs[].serial"
       ]
     }
   ]
