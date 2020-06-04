@@ -159,10 +159,10 @@ SonyTV.prototype.createServices = function () {
   // TODO: information services
   //  var informationService = new Service.AccessoryInformation();
   //  informationService
-  //  .setCharacteristic(Characteristic.Manufacturer, "Sony")
-  //  .setCharacteristic(Characteristic.Model, "Android TV")
-  //  .setCharacteristic(Characteristic.SerialNumber, "12345");
-  //  this.services.push(informationService);
+	.setCharacteristic(Characteristic.Manufacturer, "Sony")
+  //  .setCharacteristic(Characteristic.Model, config.model)
+  //  .setCharacteristic(Characteristic.SerialNumber, config.serial);
+	this.services.push(informationService);
   return this.services;
 };
 
