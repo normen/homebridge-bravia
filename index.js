@@ -69,6 +69,8 @@ function SonyTV (platform, config, accessory = null) {
   this.starttimeout = config.starttimeout || 5000;
   this.comp = config.compatibilitymode;
   this.serverPort = config.serverPort || 8999;
+  this.model = config.model || 'Default-Model';
+  this.serial = config.serial || 'Default-SerialNumber';
   this.sources = config.sources || ['extInput:hdmi', 'extInput:component', 'extInput:scart', 'extInput:cec', 'extInput:widi'];
   this.useApps = (isNull(config.applications)) ? false : (config.applications instanceof Array == true ? config.applications.length > 0 : config.applications);
   this.applications = (isNull(config.applications) || (config.applications instanceof Array != true)) ? [] : config.applications;
@@ -157,11 +159,11 @@ SonyTV.prototype.createServices = function () {
   this.speakerService = new Service.TelevisionSpeaker();
   this.services.push(this.speakerService);
   // TODO: information services
-  //  var informationService = new Service.AccessoryInformation();
-  //  informationService
+    var informationService = new Service.AccessoryInformation();
+    informationService
 	.setCharacteristic(Characteristic.Manufacturer, "Sony")
-  //  .setCharacteristic(Characteristic.Model, config.model)
-  //  .setCharacteristic(Characteristic.SerialNumber, config.serial);
+	.setCharacteristic(Characteristic.Model, config.model)
+	.setCharacteristic(Characteristic.SerialNumber, config.serial);
 	this.services.push(informationService);
   return this.services;
 };
