@@ -43,7 +43,7 @@ BraviaPlatform.prototype.configureAccessory = function (accessory) {
       if(!this.config.externalaccessory){
         self.api.unregisterPlatformAccessories('homebridge-bravia', 'BraviaPlatform', [accessory]);
       } else {
-        self.api.unpublishExternalAccessories('homebridge-bravia', [accessory]);
+//        self.api.unpublishExternalAccessories('homebridge-bravia', [accessory]);
       }
     });
   } else {
