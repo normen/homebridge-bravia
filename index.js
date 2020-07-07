@@ -40,7 +40,11 @@ BraviaPlatform.prototype.configureAccessory = function (accessory) {
   if (existingConfig === undefined) {
     this.log('Removing TV ' + accessory.displayName + ' from HomeKit');
     this.api.on('didFinishLaunching', function () {
-      self.api.unregisterPlatformAccessories('homebridge-bravia', 'BraviaPlatform', [accessory]);
+      if(!this.config.externalaccessory){
+        self.api.unregisterPlatformAccessories('homebridge-bravia', 'BraviaPlatform', [accessory]);
+      } else {
+        self.api.unpublishExternalAccessories('homebridge-bravia', [accessory]);
+      }
     });
   } else {
     this.log('Restoring ' + accessory.displayName + ' from HomeKit');
@@ -330,7 +334,11 @@ SonyTV.prototype.syncAccessory = function () {
     });
     this.log('Registering HomeBridge Accessory for ' + this.name);
     this.accessory.context.isRegisteredInHomeKit = true;
-    this.platform.api.registerPlatformAccessories('homebridge-bravia', 'BraviaPlatform', [this.accessory]);
+    if(!this.config.externalaccessory){
+      this.platform.api.registerPlatformAccessories('homebridge-bravia', 'BraviaPlatform', [this.accessory]);
+    } else {
+      this.platform.api.publishExternalAccessories('homebridge-bravia', [this.accessory]);
+    }
   } else if (changeDone) {
     this.log('Updating HomeBridge Accessory for ' + this.name);
     this.platform.api.updatePlatformAccessories([this.accessory]);
