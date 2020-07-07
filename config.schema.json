@@ -43,6 +43,12 @@
             "type": "string",
             "required": false
           },
+          "externalaccessory": {
+            "title": "External Accessory",
+            "description": "Workaround for multiple TVs and remote app, registers this TV as an external accessory",
+            "type": "boolean",
+            "required": false
+          },
           "soundoutput": {
             "title": "Sound Output",
             "description": "Required for volume control",
@@ -105,6 +111,7 @@
         "tvs[].port",
         "tvs[].mac",
         "tvs[].serverPort",
+        "tvs[].externalaccessory",
         {
           "key":"tvs[].applications",
           "items":[
