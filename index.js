@@ -102,12 +102,13 @@ function SonyTV (platform, config, accessory = null) {
 
   if (accessory != null) {
     this.accessory = accessory;
+    this.accessory.category = this.platform.api.hap.Categories.TELEVISION; //31;
     this.grabServices(accessory);
     this.applyCallbacks();
   } else {
     var uuid = UUIDGen.generate(this.name + '-SonyTV');
     this.log('Creating new accessory for ' + this.name);
-    this.accessory = new Accessory(this.name, uuid);
+    this.accessory = new Accessory(this.name, uuid, this.platform.api.hap.Categories.TELEVISION);
     this.accessory.context.config = config;
     this.accessory.context.uuid = uuidv4();
     this.log('New TV ' + this.name + ', will be queried for channels/apps and added to HomeKit');
