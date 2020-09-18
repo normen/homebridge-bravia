@@ -12,6 +12,8 @@ function BraviaPlatform (log, config, api) {
   if (!config || !api) return;
   this.log = log;
   this.config = config;
+  //TODO: fix problems with axt accessory context!
+  this.config.externalaccessory = false;
   debug = config.debug;
   this.api = api;
   if (!config.tvs) {
