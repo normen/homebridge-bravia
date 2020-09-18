@@ -3,6 +3,7 @@ var http = require('http');
 var url = require('url');
 var base64 = require('base-64');
 var wol = require('wake_on_lan');
+var fs = require('fs');
 const os = require('os');
 var debug = false;
 
@@ -12,8 +13,6 @@ function BraviaPlatform (log, config, api) {
   if (!config || !api) return;
   this.log = log;
   this.config = config;
-  //TODO: fix problems with axt accessory context!
-  this.config.externalaccessory = false;
   debug = config.debug;
   this.api = api;
   if (!config.tvs) {
@@ -45,7 +44,7 @@ BraviaPlatform.prototype.configureAccessory = function (accessory) {
       if(!accessory.context.isexternal){
         self.api.unregisterPlatformAccessories('homebridge-bravia', 'BraviaPlatform', [accessory]);
       } else {
-//        self.api.unpublishExternalAccessories('homebridge-bravia', [accessory]);
+        //TODO: delete context file? not here, we're not called
       }
     });
   } else {
@@ -102,20 +101,41 @@ function SonyTV (platform, config, accessory = null) {
   this.channelServices = [];
   this.scannedChannels = [];
 
-  if (accessory != null) {
-    this.accessory = accessory;
-    this.accessory.category = this.platform.api.hap.Categories.TELEVISION; //31;
-    this.grabServices(accessory);
-    this.applyCallbacks();
-  } else {
-    var uuid = UUIDGen.generate(this.name + '-SonyTV');
-    this.log('Creating new accessory for ' + this.name);
-    this.accessory = new Accessory(this.name, uuid, this.platform.api.hap.Categories.TELEVISION);
-    this.accessory.context.config = config;
-    this.accessory.context.uuid = uuidv4();
-    this.log('New TV ' + this.name + ', will be queried for channels/apps and added to HomeKit');
-    this.createServices();
-    this.applyCallbacks();
+  let contextPath = STORAGE_PATH+'/sonytv-context-'+this.name+'.json';
+  try{
+    if (accessory != null) {
+      // accessory was supplied - dynamic plugin with configureAccessory restore
+      this.accessory = accessory;
+      this.accessory.category = this.platform.api.hap.Categories.TELEVISION; //31;
+      this.grabServices(accessory);
+      this.applyCallbacks();
+    } else if(this.config.externalaccessory && fs.existsSync(contextPath)){
+      // try and restore external accessory
+      let rawdata = fs.readFileSync(contextPath);
+      let accessoryContext = JSON.parse(rawdata);
+      this.accessory = new Accessory(this.name, accessoryContext.uuid, this.platform.api.hap.Categories.TELEVISION);
+      this.accessory.context.uuid = accessoryContext.uuid;
+      this.accessory.context.isexternal = true;
+      //not registered - needs to be added
+      //this.accessory.context.isRegisteredInHomeKit = accessoryContext.isRegisteredInHomeKit;
+      this.accessory.context.config = this.config;
+      this.log('Cached external accessory ' + this.name + ' found and restored');
+      this.createServices();
+      this.applyCallbacks();
+    } else {
+      // new accessory
+      var uuid = UUIDGen.generate(this.name + '-SonyTV');
+      this.log('Creating new accessory for ' + this.name);
+      this.accessory = new Accessory(this.name, uuid, this.platform.api.hap.Categories.TELEVISION);
+      this.accessory.context.config = config;
+      this.accessory.context.uuid = uuidv4();
+      this.log('New TV ' + this.name + ', will be queried for channels/apps and added to HomeKit');
+      this.accessory.context.isexternal = this.config.externalaccessory;
+      this.createServices();
+      this.applyCallbacks();
+    }
+  } catch(e){
+    this.log(e);
   }
 }
 
@@ -337,10 +357,15 @@ SonyTV.prototype.syncAccessory = function () {
     });
     this.log('Registering HomeBridge Accessory for ' + this.name);
     this.accessory.context.isRegisteredInHomeKit = true;
-    if(this.platform.config.externalaccessory === false){
+    if(this.accessory.context.isexternal === false){
       this.platform.api.registerPlatformAccessories('homebridge-bravia', 'BraviaPlatform', [this.accessory]);
     } else {
-      this.accessory.context.isexternal = true;
+      try {
+        let data = JSON.stringify(this.accessory.context);
+        fs.writeFileSync(STORAGE_PATH+'/sonytv-context-'+this.accessory.context.config.name+'.json', data); 
+      } catch(e){
+        this.log(e);
+      }
       this.platform.api.publishExternalAccessories('homebridge-bravia', [this.accessory]);
     }
   } else if (changeDone) {
@@ -933,22 +958,22 @@ SonyTV.prototype.setCookie = function (headers) {
 // helper function to save cookie to disk
 SonyTV.prototype.saveCookie = function (cookie) {
   const that = this;
-  if (cookie != undefined && cookie != null && cookie.length > 0) { var fs = require('fs'); }
-  var stream = fs.createWriteStream(this.cookiepath);
-  stream.on('error', function (err) {
-    that.log('Error writing cookie file to ' + this.cookiepath + '. Add a cookiepath parameter to config.json to specify the path. Note that you specify the FILE path, not the folder.');
-    process.exit(1);
-  });
-  stream.once('open', function (fd) {
-    stream.write(cookie);
-    stream.end();
-  });
+  if (cookie != undefined && cookie != null && cookie.length > 0) { 
+    var stream = fs.createWriteStream(this.cookiepath);
+    stream.on('error', function (err) {
+      that.log('Error writing cookie file to ' + this.cookiepath + '. Add a cookiepath parameter to config.json to specify the path. Note that you specify the FILE path, not the folder.');
+      process.exit(1);
+    });
+    stream.once('open', function (fd) {
+      stream.write(cookie);
+      stream.end();
+    });
+  }
 };
 
 // helper function to load cookie from disk
 SonyTV.prototype.loadCookie = function () {
   var that = this;
-  var fs = require('fs');
   fs.readFile(this.cookiepath, function (err, data) {
     if (err) {
       if (debug) that.log('No cookie file found at ' + that.cookiepath + ':', err);

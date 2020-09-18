@@ -27,8 +27,10 @@ This plugin requires iOS 12.2, to use it with previous iOS versions install vers
 - Enter the PIN at `http://homebridge.local:8999`
   - Replace `homebridge.local` with the IP or name of your homebridge server
   - Note that the web server is only accessible when you have to enter a PIN
-- In HomeKit, press the "+" button and select "Add Device", select "I have no code", then enter the code of your homebridge install to add the TV
 - Your TV should appear in HomeKit as soon as all channels have been scanned
+- For external accessory mode (see below)
+  - In HomeKit, press the "+" button and select "Add Device"
+  - Select "I have no code", then enter the code of your homebridge install to add the TV
 
 ### Configure config.json
 Example config:
@@ -80,14 +82,12 @@ Optional options (all inside one TV entry):
       ```
   - `soundoutput` is your preferred TV sound output, can be `speaker` or `headphone`, default `speaker`
   - `port` is the HTTP port of your TV, default 80
+  - `externalaccessory` if set the TV will be published as an external accessory to HomeKit
   - `mac` is the MAC address of your TV, only set it if you want to use WOL instead of HTTP to wake up the TV, default none
   - `woladdress` sets the subnet for WOL, default `255.255.255.255`
   - `serverPort` sets a different port than `8999` for the web server that allows entering the PIN number from the TV
   - `updaterate` interval in milliseconds for TV status updates (on/off etc), default `5000`
   - `channelupdaterate` interval in milliseconds for updates of the channel/input list, default `30000`
-
-Global options outside the TV entry
-  - `externalaccessory` if set to false the TV will not be published as an external accessory to HomeKit
 
 ## Usage
 ### Basic functions
