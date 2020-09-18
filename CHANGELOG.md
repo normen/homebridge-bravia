@@ -3,6 +3,9 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-bravia/blob/master/README.md)
 
+## 2.4.1
+- disable external accessory mode as its broken as of now
+
 ## 2.4
 - make externalaccessory mode the default
 
