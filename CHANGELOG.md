@@ -3,6 +3,9 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-bravia/blob/master/README.md)
 
+## 2.4
+- make externalaccessory mode the default
+
 ## 2.3.2
 - add accessory category to fix icon display
 
