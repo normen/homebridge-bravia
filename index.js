@@ -357,7 +357,7 @@ SonyTV.prototype.syncAccessory = function () {
     });
     this.log('Registering HomeBridge Accessory for ' + this.name);
     this.accessory.context.isRegisteredInHomeKit = true;
-    if(this.accessory.context.isexternal === false){
+    if(!this.accessory.context.isexternal){
       this.platform.api.registerPlatformAccessories('homebridge-bravia', 'BraviaPlatform', [this.accessory]);
     } else {
       try {
