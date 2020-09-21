@@ -113,7 +113,8 @@ function SonyTV (platform, config, accessory = null) {
       // try and restore external accessory
       let rawdata = fs.readFileSync(contextPath);
       let accessoryContext = JSON.parse(rawdata);
-      this.accessory = new Accessory(this.name, accessoryContext.uuid, this.platform.api.hap.Categories.TELEVISION);
+      var uuid = UUIDGen.generate(this.name + '-SonyTV');
+      this.accessory = new Accessory(this.name, uuid, this.platform.api.hap.Categories.TELEVISION);
       this.accessory.context.uuid = accessoryContext.uuid;
       this.accessory.context.isexternal = true;
       //not registered - needs to be added
