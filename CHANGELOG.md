@@ -3,6 +3,10 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-bravia/blob/master/README.md)
 
+## 2.4.4
+- Fix UUID issue causing external TVs to be added twice
+- External TVs might have to be added again
+
 ## 2.4.3
 - Fix adding devices in non-external mode
 
