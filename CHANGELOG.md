@@ -3,6 +3,10 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-bravia/blob/master/README.md)
 
+## 2.4.5
+- Allow enabling debug output per TV through UI
+- Fix debug output not working
+
 ## 2.4.4
 - Fix UUID issue causing external TVs to be added twice
 - External TVs might have to be added again

@@ -5,7 +5,6 @@ var base64 = require('base-64');
 var wol = require('wake_on_lan');
 var fs = require('fs');
 const os = require('os');
-var debug = false;
 
 var Service, Characteristic, Accessory, UUIDGen, STORAGE_PATH;
 
@@ -13,7 +12,6 @@ function BraviaPlatform (log, config, api) {
   if (!config || !api) return;
   this.log = log;
   this.config = config;
-  debug = config.debug;
   this.api = api;
   if (!config.tvs) {
     log('Warning: Bravia plugin not configured.');
@@ -60,6 +58,7 @@ BraviaPlatform.prototype.configureAccessory = function (accessory) {
 // TV accessory class
 function SonyTV (platform, config, accessory = null) {
   this.platform = platform;
+  this.debug = config.debug;
   this.log = platform.log;
   this.config = config;
   this.name = config.name;
@@ -253,7 +252,7 @@ SonyTV.prototype.checkRegistration = function () {
     return false;
   };
   var onSucces = function (chunk) {
-    if (chunk.indexOf('"error"') >= 0) { if (debug) self.log('Error? ', chunk); }
+    if (chunk.indexOf('"error"') >= 0) { if (self.debug) self.log('Error? ', chunk); }
     if (chunk.indexOf('[]') < 0) {
       self.log('Need to authenticate with TV!');
       self.log('Please enter the PIN that appears on your TV at http://' + os.hostname() + ':' + self.serverPort);
@@ -415,8 +414,8 @@ SonyTV.prototype.receiveNextSources = function () {
 SonyTV.prototype.receiveSource = function (sourceName, sourceType) {
   const that = this;
   var onError = function (err) {
-    if(debug) that.log('Error loading sources for ' + sourceName);
-    if(debug) that.log(err);
+    if(that.debug) that.log('Error loading sources for ' + sourceName);
+    if(that.debug) that.log(err);
     that.receiveNextSources();
   };
   var onSucces = function (data) {
@@ -427,13 +426,13 @@ SonyTV.prototype.receiveSource = function (sourceName, sourceType) {
         reslt.forEach(function (source) {
           that.scannedChannels.push([source.title, source.uri, sourceType]);
         });
-      } else if(debug) {
+      } else if(that.debug) {
         that.log('Can\'t load sources for ' + sourceName);
         that.log('TV response:');
         that.log(data);
       }
     } catch (e) {
-      if(debug) that.log(e);
+      if(that.debug) that.log(e);
     }
     that.receiveNextSources();
   };
@@ -445,8 +444,8 @@ SonyTV.prototype.receiveSource = function (sourceName, sourceType) {
 SonyTV.prototype.receiveApplications = function () {
   const that = this;
   var onError = function (err) {
-    if(debug) that.log('Error loading applications:');
-    if(debug) that.log(err);
+    if(that.debug) that.log('Error loading applications:');
+    if(that.debug) that.log(err);
     that.receivingSources = false;
     that.syncAccessory();
   };
@@ -462,13 +461,13 @@ SonyTV.prototype.receiveApplications = function () {
             //            that.log('Ignoring application: ' + source.title);
           }
         });
-      } else if(debug){
+      } else if(that.debug){
         that.log('Can\'t load applications.');
         that.log('TV response:');
         that.log(data);
       }
     } catch (e) {
-      if(debug) that.log(e);
+      if(that.debug) that.log(e);
     }
     that.receivingSources = false;
     that.syncAccessory();
@@ -483,7 +482,7 @@ SonyTV.prototype.pollPlayContent = function () {
   const that = this;
   var post_data = '{"id":13,"method":"getPlayingContentInfo","version":"1.0","params":[]}';
   var onError = function (err) {
-    if (debug) that.log('Error: ', err);
+    if (that.debug) that.log('Error: ', err);
     if (!isNull(that.currentUri)) {
       that.currentUri = null;
       that.tvService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(0);
@@ -518,7 +517,7 @@ SonyTV.prototype.pollPlayContent = function () {
           that.currentUri = null;
           that.tvService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(0);
         }
-        if(debug) that.log('Can\'t poll play content', e);
+        if(that.debug) that.log('Can\'t poll play content', e);
       }
     }
   };
@@ -667,12 +666,12 @@ SonyTV.prototype.getMuted = function (callback) {
   }
   var post_data = '{"id":4,"method":"getVolumeInformation","version":"1.0","params":[]}';
   var onError = function (err) {
-    if (debug) that.log('Error: ', err);
+    if (that.debug) that.log('Error: ', err);
     if (!isNull(callback)) callback(null, false);
   };
   var onSucces = function (chunk) {
     if (chunk.indexOf('"error"') >= 0) {
-      if (debug) that.log('Error? ', chunk);
+      if (that.debug) that.log('Error? ', chunk);
       if (!isNull(callback)) callback(null, false);
       return;
     }
@@ -710,11 +709,11 @@ SonyTV.prototype.setMuted = function (muted, callback) {
   var merterd = muted ? 'true' : 'false';
   var post_data = '{"id":13,"method":"setAudioMute","version":"1.0","params":[{"status":' + merterd + '}]}';
   var onError = function (err) {
-    if (debug) that.log('Error: ', err);
+    if (that.debug) that.log('Error: ', err);
     if (!isNull(callback)) callback(null, 0);
   };
   var onSucces = function (chunk) {
-    if (chunk.indexOf('"error"') >= 0) { if(debug) that.log('Error? ', chunk); }
+    if (chunk.indexOf('"error"') >= 0) { if(that.debug) that.log('Error? ', chunk); }
     if (!isNull(callback)) callback(null, muted);
   };
   that.makeHttpRequest(onError, onSucces, '/sony/audio/', post_data, false);
@@ -729,12 +728,12 @@ SonyTV.prototype.getVolume = function (callback) {
   }
   var post_data = '{"id":4,"method":"getVolumeInformation","version":"1.0","params":[]}';
   var onError = function (err) {
-    if (debug) that.log('Error: ', err);
+    if (that.debug) that.log('Error: ', err);
     if (!isNull(callback)) callback(null, 0);
   };
   var onSucces = function (chunk) {
     if (chunk.indexOf('"error"') >= 0) {
-      if (debug) that.log('Error? ', chunk);
+      if (that.debug) that.log('Error? ', chunk);
       if (!isNull(callback)) callback(null, 0);
       return;
     }
@@ -771,7 +770,7 @@ SonyTV.prototype.setVolume = function (volume, callback) {
   }
   var post_data = '{"id":13,"method":"setAudioVolume","version":"1.0","params":[{"target":"' + that.soundoutput + '","volume":"' + volume + '"}]}';
   var onError = function (err) {
-    if (debug) that.log('Error: ', err);
+    if (that.debug) that.log('Error: ', err);
     if (!isNull(callback)) callback(null, 0);
   };
   var onSucces = function (chunk) {
@@ -784,7 +783,7 @@ SonyTV.prototype.setVolume = function (volume, callback) {
 SonyTV.prototype.getPowerState = function (callback) {
   var that = this;
   var onError = function (err) {
-    if (debug) that.log('Error: ', err);
+    if (that.debug) that.log('Error: ', err);
     if (!isNull(callback)) callback(null, false);
     that.updatePowerState(false);
   };
@@ -800,7 +799,7 @@ SonyTV.prototype.getPowerState = function (callback) {
         if (!isNull(callback)) callback(null, false);
       }
     } catch (e) {
-      if (debug) console.log(e);
+      if (that.debug) console.log(e);
       that.updatePowerState(false);
       if (!isNull(callback)) callback(null, false);
     }
@@ -809,7 +808,7 @@ SonyTV.prototype.getPowerState = function (callback) {
     var post_data = '{"id":2,"method":"getPowerStatus","version":"1.0","params":[]}';
     that.makeHttpRequest(onError, onSucces, '/sony/system/', post_data, false);
   } catch (globalExcp) {
-    if (debug) console.log(globalExcp);
+    if (that.debug) console.log(globalExcp);
     that.updatePowerState(false);
     if (!isNull(callback)) callback(null, false);
   }
@@ -819,7 +818,7 @@ SonyTV.prototype.getPowerState = function (callback) {
 SonyTV.prototype.setPowerState = function (state, callback) {
   var that = this;
   var onError = function (err) {
-    if (debug) that.log('Error: ', err);
+    if (that.debug) that.log('Error: ', err);
     that.getPowerState(callback);
   };
   var onSucces = function (chunk) {
@@ -977,10 +976,10 @@ SonyTV.prototype.loadCookie = function () {
   var that = this;
   fs.readFile(this.cookiepath, function (err, data) {
     if (err) {
-      if (debug) that.log('No cookie file found at ' + that.cookiepath + ':', err);
+      if (that.debug) that.log('No cookie file found at ' + that.cookiepath + ':', err);
       return;
     }
-    if (debug) that.log('Loaded cookie file from ' + that.cookiepath);
+    if (that.debug) that.log('Loaded cookie file from ' + that.cookiepath);
     that.cookie = data.toString();
   });
 };
