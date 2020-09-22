@@ -122,6 +122,7 @@ function SonyTV (platform, config, accessory = null) {
       this.log('Cached external accessory ' + this.name + ' found and restored');
       this.createServices();
       this.applyCallbacks();
+      this.loadChannelsFromFile();
     } else {
       // new accessory
       var uuid = UUIDGen.generate(this.name + '-SonyTV');
@@ -278,20 +279,21 @@ SonyTV.prototype.checkRegistration = function () {
       });
     } else {
       self.authok = true;
-      self.receiveSources();
+      self.receiveSources(true);
     }
   };
   self.makeHttpRequest(onError, onSucces, '/sony/accessControl/', post_data, false);
 };
 
 // creates homebridge service for TV input
-SonyTV.prototype.addInputSource = function (name, uri, type) {
+SonyTV.prototype.addInputSource = function (name, uri, type, configuredName = null, identifier = null) {
   const that = this;
   // FIXME: Using subtype to store URI, hack!
-  const identifier = this.getFreeIdentifier();
+  if(identifier === null) identifier = this.getFreeIdentifier();
+  if(configuredName === null) configuredName = name;
   var inputSource = new Service.InputSource(name, uri); // displayname, subtype?
   inputSource.setCharacteristic(Characteristic.Identifier, identifier)
- 	  .setCharacteristic(Characteristic.ConfiguredName, name)
+ 	  .setCharacteristic(Characteristic.ConfiguredName, configuredName)
  	  .setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN)
     .setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
  	  .setCharacteristic(Characteristic.InputSourceType, type);
@@ -316,6 +318,45 @@ SonyTV.prototype.haveInputSource = function (name, uri, type) {
       (source.getCharacteristic(Characteristic.InputSourceType).value == type)
   )) !== undefined;
 };
+
+// save channels to file for external accessories
+SonyTV.prototype.saveChannelsToFile = function() {
+  let self = this;
+  let storeObject=[];
+  this.channelServices.forEach(service => {
+    storeObject.push({
+      identifier: service.getCharacteristic(Characteristic.Identifier).value,
+      name: service.getCharacteristic(Characteristic.Name).value,
+      configuredName: service.getCharacteristic(Characteristic.ConfiguredName).value,
+      uri: service.subtype,
+      type: service.getCharacteristic(Characteristic.InputSourceType).value
+    }); 
+  });
+  try {
+    let data = JSON.stringify(storeObject);
+    fs.writeFileSync(STORAGE_PATH+'/sonytv-channels-'+this.name+'.json', data); 
+    if(this.debug) this.log("Stored channels in external storage");
+  } catch(e){
+    this.log(e);
+  }
+}
+
+// load channels from file for external accessories
+SonyTV.prototype.loadChannelsFromFile = function() {
+  let self = this;  
+  let channelsPath = STORAGE_PATH+'/sonytv-channels-'+this.name+'.json';
+  if(fs.existsSync(channelsPath)) try {
+    let rawdata = fs.readFileSync(channelsPath);
+    let storeObject = JSON.parse(rawdata);
+    storeObject.forEach(source => {
+      self.scannedChannels.push([source.name, source.uri, source.type]);
+      self.addInputSource(source.name, source.uri, source.type, source.configuredName, source.identifier);
+    });
+    if(this.debug) this.log("Loaded channels from external storage");
+  } catch(e){
+    this.log(e); 
+  }
+}
 
 // syncs the channels and publishes/updates the TV accessory for HomeKit
 SonyTV.prototype.syncAccessory = function () {
@@ -372,11 +413,16 @@ SonyTV.prototype.syncAccessory = function () {
     this.log('Updating HomeBridge Accessory for ' + this.name);
     this.platform.api.updatePlatformAccessories([this.accessory]);
   }
+  if(this.accessory.context.isexternal){
+    this.saveChannelsToFile();
+  }
+  this.receivingSources = false;
 };
 
 // initialize a scan for new sources
-SonyTV.prototype.receiveSources = function () {
-  if (!this.receivingSources && this.power) {
+SonyTV.prototype.receiveSources = function (checkPower = null) {
+  if(checkPower === null) checkPower = this.power;
+  if (!this.receivingSources && checkPower) {
     const that = this;
     this.inputSourceList = [];
     this.sources.forEach(function (sourceName) {
@@ -399,7 +445,6 @@ SonyTV.prototype.receiveNextSources = function () {
     if (this.useApps && !this.appsLoaded) {
       this.receiveApplications();
     } else {
-      this.receivingSources = false;
       this.syncAccessory();
     }
     return;
@@ -446,7 +491,6 @@ SonyTV.prototype.receiveApplications = function () {
   var onError = function (err) {
     if(that.debug) that.log('Error loading applications:');
     if(that.debug) that.log(err);
-    that.receivingSources = false;
     that.syncAccessory();
   };
   var onSucces = function (data) {
@@ -469,7 +513,6 @@ SonyTV.prototype.receiveApplications = function () {
     } catch (e) {
       if(that.debug) that.log(e);
     }
-    that.receivingSources = false;
     that.syncAccessory();
   };
   var post_data = '{"id":13,"method":"getApplicationList","version":"1.0","params":[]}';
