@@ -49,6 +49,12 @@
             "type": "boolean",
             "required": false
           },
+          "debug": {
+            "title": "Debug Log Output",
+            "description": "Gives additional debug output in the log",
+            "type": "boolean",
+            "required": false
+          },
           "soundoutput": {
             "title": "Sound Output",
             "description": "Required for volume control",
@@ -112,6 +118,7 @@
         "tvs[].mac",
         "tvs[].serverPort",
         "tvs[].externalaccessory",
+        "tvs[].debug",
         {
           "key":"tvs[].applications",
           "items":[
