@@ -345,14 +345,16 @@ SonyTV.prototype.saveChannelsToFile = function() {
 SonyTV.prototype.loadChannelsFromFile = function() {
   let self = this;  
   let channelsPath = STORAGE_PATH+'/sonytv-channels-'+this.name+'.json';
-  if(fs.existsSync(channelsPath)) try {
-    let rawdata = fs.readFileSync(channelsPath);
-    let storeObject = JSON.parse(rawdata);
-    storeObject.forEach(source => {
-      self.scannedChannels.push([source.name, source.uri, source.type]);
-      self.addInputSource(source.name, source.uri, source.type, source.configuredName, source.identifier);
-    });
-    if(this.debug) this.log("Loaded channels from external storage");
+   try { 
+     if(fs.existsSync(channelsPath)) {
+       let rawdata = fs.readFileSync(channelsPath);
+       let storeObject = JSON.parse(rawdata);
+       storeObject.forEach(source => {
+         self.scannedChannels.push([source.name, source.uri, source.type]);
+         self.addInputSource(source.name, source.uri, source.type, source.configuredName, source.identifier);
+       });
+       if(this.debug) this.log("Loaded channels from external storage");
+     }
   } catch(e){
     this.log(e); 
   }
