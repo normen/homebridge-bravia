@@ -219,12 +219,12 @@ SonyTV.prototype.applyCallbacks = function () {
   this.speakerService
     .setCharacteristic(Characteristic.Name, this.soundoutput);
   this.speakerService
-	  .setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
+    .setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
   this.speakerService
     .getCharacteristic(Characteristic.VolumeSelector) // increase/decrease volume
     .on('set', this.setVolumeSelector.bind(this));
   this.speakerService
-	  .getCharacteristic(Characteristic.Mute)
+    .getCharacteristic(Characteristic.Mute)
     .on('get', this.getMuted.bind(this))
     .on('set', this.setMuted.bind(this));
   this.speakerService.getCharacteristic(Characteristic.Volume)
@@ -293,10 +293,10 @@ SonyTV.prototype.addInputSource = function (name, uri, type, configuredName = nu
   if (configuredName === null) configuredName = name;
   var inputSource = new Service.InputSource(name, uri); // displayname, subtype?
   inputSource.setCharacteristic(Characteristic.Identifier, identifier)
- 	  .setCharacteristic(Characteristic.ConfiguredName, configuredName)
- 	  .setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN)
+    .setCharacteristic(Characteristic.ConfiguredName, configuredName)
+    .setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN)
     .setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
- 	  .setCharacteristic(Characteristic.InputSourceType, type);
+    .setCharacteristic(Characteristic.InputSourceType, type);
   this.channelServices.push(inputSource);
   this.tvService.addLinkedService(inputSource);
   this.uriToInputSource.set(uri, inputSource);
@@ -308,14 +308,14 @@ SonyTV.prototype.addInputSource = function (name, uri, type, configuredName = nu
 SonyTV.prototype.haveChannel = function (source) {
   return this.scannedChannels.find(channel => (
     (source.subtype == channel[1]) &&
-      (source.getCharacteristic(Characteristic.InputSourceType).value == channel[2])
+    (source.getCharacteristic(Characteristic.InputSourceType).value == channel[2])
   )) !== undefined;
 };
 
 SonyTV.prototype.haveInputSource = function (name, uri, type) {
   return this.channelServices.find(source => (
     (source.subtype == uri) &&
-      (source.getCharacteristic(Characteristic.InputSourceType).value == type)
+    (source.getCharacteristic(Characteristic.InputSourceType).value == type)
   )) !== undefined;
 };
 
