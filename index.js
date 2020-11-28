@@ -8,7 +8,7 @@ const os = require('os');
 
 var Service, Characteristic, Accessory, UUIDGen, STORAGE_PATH;
 
-function BraviaPlatform (log, config, api) {
+function BraviaPlatform(log, config, api) {
   if (!config || !api) return;
   this.log = log;
   this.config = config;
@@ -56,7 +56,7 @@ BraviaPlatform.prototype.configureAccessory = function (accessory) {
 };
 
 // TV accessory class
-function SonyTV (platform, config, accessory = null) {
+function SonyTV(platform, config, accessory = null) {
   this.platform = platform;
   this.debug = config.debug;
   this.log = platform.log;
@@ -253,20 +253,20 @@ SonyTV.prototype.checkRegistration = function () {
     return false;
   };
   var onSucces = function (chunk) {
-    if (chunk.indexOf('"error"') >= 0) { if (self.debug) self.log('Error? ', chunk); }
+    if (chunk.indexOf('"error"') >= 0) {if (self.debug) self.log('Error? ', chunk);}
     if (chunk.indexOf('[]') < 0) {
       self.log('Need to authenticate with TV!');
       self.log('Please enter the PIN that appears on your TV at http://' + os.hostname() + ':' + self.serverPort);
       self.server = http.createServer(function (req, res) {
         var urlObject = url.parse(req.url, true, false);
         if (urlObject.query.pin) {
-          res.writeHead(200, { 'Content-Type': 'text/html' });
+          res.writeHead(200, {'Content-Type': 'text/html'});
           res.write('<html><body>PIN ' + urlObject.query.pin + ' sent</body></html>');
           self.pwd = urlObject.query.pin;
           self.server.close();
           self.checkRegistration();
         } else {
-          res.writeHead(200, { 'Content-Type': 'text/html' });
+          res.writeHead(200, {'Content-Type': 'text/html'});
           res.write('<html><body><form action="/"><label for="pin">Enter PIN:</label><br><input type="text" id="pin" name="pin"><input type="submit" value="Submit"></form></body></html>');
           res.end();
         }
@@ -875,7 +875,7 @@ SonyTV.prototype.setPowerState = function (state, callback) {
   };
   if (state) {
     if (!isNull(this.mac)) {
-      wol.wake(this.mac, { address: this.woladdress }, onWol);
+      wol.wake(this.mac, {address: this.woladdress}, onWol);
     } else {
       var post_data = '{"id":2,"method":"setPowerStatus","version":"1.0","params":[{"status":true}]}';
       that.makeHttpRequest(onError, onSucces, '/sony/system/', post_data, false);
@@ -903,7 +903,7 @@ SonyTV.prototype.updatePowerState = function (state) {
 SonyTV.prototype.makeHttpRequest = function (errcallback, resultcallback, url, post_data, canTurnTvOn) {
   var that = this;
   var data = '';
-  if (isNull(canTurnTvOn)) { canTurnTvOn = false; }
+  if (isNull(canTurnTvOn)) {canTurnTvOn = false;}
   if (!that.power && canTurnTvOn) {
     that.setPowerState(true, null);
     var timeout = that.starttimeout;
@@ -1029,11 +1029,11 @@ SonyTV.prototype.loadCookie = function () {
   });
 };
 
-function isNull (object) {
+function isNull(object) {
   return object == undefined || null;
 }
 
-function uuidv4 () {
+function uuidv4() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     var r = Math.random() * 16 | 0; var v = c == 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
@@ -1041,12 +1041,12 @@ function uuidv4 () {
 }
 
 // helper class to convert an input type strin to a hb InputSourceType
-function InputSource (name, type) {
+function InputSource(name, type) {
   this.name = name;
   this.type = type;
 }
 
-function getSourceType (name) {
+function getSourceType(name) {
   if (name.indexOf('hdmi') !== -1) {
     return Characteristic.InputSourceType.HDMI;
   } else if (name.indexOf('component') !== -1) {
