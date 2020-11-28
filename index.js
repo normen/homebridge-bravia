@@ -287,7 +287,6 @@ class SonyTV {
   }
   // creates homebridge service for TV input
   addInputSource(name, uri, type, configuredName = null, identifier = null) {
-    const that = this;
     // FIXME: Using subtype to store URI, hack!
     if (identifier === null)
       identifier = this.getFreeIdentifier();
@@ -320,7 +319,6 @@ class SonyTV {
   }
   // save channels to file for external accessories
   saveChannelsToFile() {
-    const self = this;
     const storeObject = [];
     this.channelServices.forEach(service => {
       storeObject.push({
@@ -442,7 +440,6 @@ class SonyTV {
   }
   // receive the next sources in the inputSourceList, register accessory if all have been received
   receiveNextSources() {
-    const that = this;
     if (this.inputSourceList.length == 0) {
       if (this.useApps && !this.appsLoaded) {
         this.receiveApplications();
