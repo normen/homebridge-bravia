@@ -205,7 +205,6 @@ class SonyTV {
     this.tvService
       .getCharacteristic(Characteristic.Active)
       .on('set', this.setPowerState.bind(this))
-      .on('get', this.getPowerState.bind(this));
     this.tvService.setCharacteristic(Characteristic.ActiveIdentifier, 0);
     this.tvService
       .getCharacteristic(Characteristic.ActiveIdentifier)
@@ -620,7 +619,7 @@ class SonyTV {
       }
     }
     if (!isNull(callback))
-      callback(null, identifier);
+      callback(null);
   }
   // homebridge callback to set volume via selector (up/down)
   setVolumeSelector(key, callback) {
@@ -759,7 +758,7 @@ class SonyTV {
     var that = this;
     if (!that.power) {
       if (!isNull(callback))
-        callback(null, 0);
+        callback(null);
       return;
     }
     var merterd = muted ? 'true' : 'false';
@@ -768,7 +767,7 @@ class SonyTV {
       if (that.debug)
         that.log('Error: ', err);
       if (!isNull(callback))
-        callback(null, 0);
+        callback(null);
     };
     var onSucces = function (chunk) {
       if (chunk.indexOf('"error"') >= 0) {
@@ -776,7 +775,7 @@ class SonyTV {
           that.log('Error? ', chunk);
       }
       if (!isNull(callback))
-        callback(null, muted);
+        callback(null);
     };
     that.makeHttpRequest(onError, onSucces, '/sony/audio/', post_data, false);
   }
@@ -835,7 +834,7 @@ class SonyTV {
     var that = this;
     if (!that.power) {
       if (!isNull(callback))
-        callback(null, 0);
+        callback(null);
       return;
     }
     var post_data = '{"id":13,"method":"setAudioVolume","version":"1.0","params":[{"target":"' + that.soundoutput + '","volume":"' + volume + '"}]}';
@@ -843,11 +842,11 @@ class SonyTV {
       if (that.debug)
         that.log('Error: ', err);
       if (!isNull(callback))
-        callback(null, 0);
+        callback(null);
     };
     var onSucces = function (chunk) {
       if (!isNull(callback))
-        callback(null, volume);
+        callback(null);
     };
     that.makeHttpRequest(onError, onSucces, '/sony/audio/', post_data, false);
   }
@@ -899,15 +898,18 @@ class SonyTV {
     var onError = function (err) {
       if (that.debug)
         that.log('Error: ', err);
-      that.getPowerState(callback);
+      if (!isNull(callback))
+        callback(null);
     };
     var onSucces = function (chunk) {
-      that.getPowerState(callback);
+      if (!isNull(callback))
+        callback(null);
     };
     var onWol = function (error) {
       if (error)
         that.log('Error when sending WOL packets', error);
-      that.getPowerState(callback);
+      if (!isNull(callback))
+        callback(null);
     };
     if (state) {
       if (!isNull(this.mac)) {
