@@ -1101,11 +1101,27 @@ function getSourceType(name) {
   }
 }
 
+// create storage folder and move files to folder
+function updateStorage(newPath){
+  var confPath = newPath + "/plugin-persist/homebridge-bravia";
+  if(!fs.existsSync(confPath)){
+    fs.mkdirSync(confPath, {recursive: true});
+    var rootFiles = fs.readdirSync(newPath);
+    rootFiles.forEach(file => {
+      if(file.startsWith("sonycookie") || file.startsWith("sonytv-")){
+        console.log("homebridge-bravia: moving %s to new storage folder", file);
+        fs.renameSync(newPath+"/"+file, confPath+"/"+file);
+      }
+    });
+  }
+  return confPath;
+}
+
 module.exports = function (homebridge) {
   Accessory = homebridge.platformAccessory;
   Service = homebridge.hap.Service;
   Characteristic = homebridge.hap.Characteristic;
   UUIDGen = homebridge.hap.uuid;
-  STORAGE_PATH = homebridge.user.storagePath();
+  STORAGE_PATH = updateStorage(homebridge.user.storagePath());
   homebridge.registerPlatform('homebridge-bravia', 'BraviaPlatform', BraviaPlatform, true);
 };
