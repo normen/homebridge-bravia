@@ -4,7 +4,7 @@ This is the change log for the plugin, all relevant changes will be listed here.
 For documentation please see the [README](https://github.com/normen/homebridge-bravia/blob/master/README.md)
 
 ## 2.4.10
-- Fixes to index.js and package.json to meet Homebridge 2.0 readiness
+- Fixes to index.js to meet Homebridge 2.0 readiness
 - index.js changes to avoid issues adding previously cached accessories
 - pacakge.json - config updates to support homebridge 2.0
 
