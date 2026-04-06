@@ -3,6 +3,11 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-bravia/blob/master/README.md)
 
+## 2.5.0
+- add compatibility with the Homebridge 2.0 platform API while keeping Homebridge 1.x support
+- remove deprecated accessory reachability handling
+- update package metadata and development setup for the Homebridge 2.0 release line
+
 ## 2.4.9
 - Use proper storage folder `plugin-persist/homebridge-bravia`
 
@@ -135,4 +140,3 @@ For documentation please see the [README](https://github.com/normen/homebridge-b
 
 ## 1.3.1
 - add support for config-ui-x settings panels
-

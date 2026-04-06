@@ -1,10 +1,10 @@
 {
   "name": "homebridge-bravia",
-  "version": "2.4.9",
+  "version": "2.5.0",
   "description": "Homebridge plugin for Sony Bravia TVs (AndroidTV based ones and possibly others)",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/homebridge/bin/homebridge -P ./ -I -U ./.homebridge"
+    "test": "./node_modules/.bin/homebridge -P ./ -I -U ./.homebridge"
   },
   "repository": {
     "type": "git",
@@ -24,14 +24,17 @@
   },
   "homepage": "https://github.com/normen/homebridge-bravia#readme",
   "engines": {
-    "homebridge": ">=0.4.46",
-    "node": ">=0.12.0"
+    "homebridge": "^1.6.0 || ^2.0.0-beta.0",
+    "node": "^18.20.4 || ^20.15.1 || ^22.0.0 || ^24.0.0"
+  },
+  "peerDependencies": {
+    "homebridge": "^1.6.0 || ^2.0.0-beta.0"
   },
   "dependencies": {
     "base-64": "^0.1.0",
     "wake_on_lan": "^1.0.0"
   },
   "devDependencies": {
-    "homebridge": "^1.3.2"
+    "homebridge": "^2.0.0-beta.85"
   }
 }

@@ -2,6 +2,8 @@
 
 HomeBridge plugin for Sony Bravia TVs (AndroidTV based ones and possibly others).
 
+This release line supports **Homebridge 1.x and the Homebridge 2.0 release line** with the same configuration format.
+
 ## Introduction
 Supports the following functions
   - Turning TV on/off
@@ -17,6 +19,7 @@ This plugin requires iOS 12.2, to use it with previous iOS versions install vers
 **Note for users of versions before 2.0: Updating to 2.0+ will force you to set up the TV (including all HomeKit automation) again**
 
 ## Installation
+- Install Homebridge 1.x or 2.x on a supported Node.js runtime
 - Install homebridge (e.g. using `npm install -g homebridge`)
 - Install this plugin (e.g. using `npm install -g homebridge-bravia`)
 - Configure the plugin settings through config.json or web UI (see below for the options)
@@ -108,6 +111,8 @@ If you want new features or improve the plugin, you're very welcome to do so. Th
 - create `.homebridge` folder in project root
 - add `config.json` with appropriate content to `.homebridge` folder
 - run `npm run test` to start the homebridge instance for testing
+
+The plugin now registers with both the Homebridge 1.x and 2.x platform APIs, so no config changes are required when testing either branch.
 
 ## Notes
 ### Misc

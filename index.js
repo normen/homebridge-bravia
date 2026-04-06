@@ -7,6 +7,8 @@ var fs = require('fs');
 const os = require('os');
 
 var Service, Characteristic, Accessory, UUIDGen, STORAGE_PATH;
+const PLUGIN_NAME = 'homebridge-bravia';
+const PLATFORM_NAME = 'BraviaPlatform';
 
 class BraviaPlatform {
   constructor(log, config, api) {
@@ -41,15 +43,13 @@ class BraviaPlatform {
       this.log('Removing TV ' + accessory.displayName + ' from HomeKit');
       this.api.on('didFinishLaunching', function () {
         if (!accessory.context.isexternal) {
-          self.api.unregisterPlatformAccessories('homebridge-bravia', 'BraviaPlatform', [accessory]);
+          self.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
         } else {
           // TODO: delete context file? not here, we're not called
         }
       });
     } else {
       this.log('Restoring ' + accessory.displayName + ' from HomeKit');
-      // TODO: reachable
-      accessory.reachable = true;
       // if its restored its registered
       self.devices.push(new SonyTV(this, existingConfig, accessory));
       accessory.context.isRegisteredInHomeKit = true;
@@ -397,7 +397,7 @@ class SonyTV {
       this.log('Registering HomeBridge Accessory for ' + this.name);
       this.accessory.context.isRegisteredInHomeKit = true;
       if (!this.accessory.context.isexternal) {
-        this.platform.api.registerPlatformAccessories('homebridge-bravia', 'BraviaPlatform', [this.accessory]);
+        this.platform.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [this.accessory]);
       } else {
         try {
           const data = JSON.stringify(this.accessory.context);
@@ -405,7 +405,7 @@ class SonyTV {
         } catch (e) {
           this.log(e);
         }
-        this.platform.api.publishExternalAccessories('homebridge-bravia', [this.accessory]);
+        this.platform.api.publishExternalAccessories(PLUGIN_NAME, [this.accessory]);
       }
     } else if (changeDone) {
       this.log('Updating HomeBridge Accessory for ' + this.name);
@@ -1117,11 +1117,19 @@ function updateStorage(newPath){
   return confPath;
 }
 
-module.exports = function (homebridge) {
-  Accessory = homebridge.platformAccessory;
-  Service = homebridge.hap.Service;
-  Characteristic = homebridge.hap.Characteristic;
-  UUIDGen = homebridge.hap.uuid;
-  STORAGE_PATH = updateStorage(homebridge.user.storagePath());
-  homebridge.registerPlatform('homebridge-bravia', 'BraviaPlatform', BraviaPlatform, true);
+function registerPlatform(api) {
+  if (typeof api.versionGreaterOrEqual === 'function' && api.versionGreaterOrEqual('2.0.0-beta.0')) {
+    api.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, BraviaPlatform);
+  } else {
+    api.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, BraviaPlatform, true);
+  }
+}
+
+module.exports = function (api) {
+  Accessory = api.platformAccessory;
+  Service = api.hap.Service;
+  Characteristic = api.hap.Characteristic;
+  UUIDGen = api.hap.uuid;
+  STORAGE_PATH = updateStorage(api.user.storagePath());
+  registerPlatform(api);
 };
