@@ -3,6 +3,12 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-bravia/blob/master/README.md)
 
+## 2.5.2
+- clean up stale persisted files for TVs removed from config or switched out of external accessory mode
+- avoid recreating phantom external TV accessories from leftover plugin state
+- remove cached bridged TV accessories when the same TV is now configured as an external accessory
+- avoid restoring stale platform accessories based on name alone when the accessory mode changed
+
 ## 2.5.1
 - update the config schema to the current Homebridge validator format
 - remove `homebridge` peer dependency so verifier checks no longer flag bundled Homebridge / hap-nodejs installs

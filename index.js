@@ -21,6 +21,7 @@ class BraviaPlatform {
       log('Warning: Bravia plugin not configured.');
       return;
     }
+    cleanupPersistedStorage(config.tvs, log);
     this.devices = [];
     const self = this;
     api.on('didFinishLaunching', function () {
@@ -39,7 +40,8 @@ class BraviaPlatform {
       return;
     }
     var existingConfig = this.config.tvs.find(tv => tv.name === accessory.context.config.name);
-    if (existingConfig === undefined) {
+    var shouldBeExternal = existingConfig !== undefined && !!existingConfig.externalaccessory;
+    if (existingConfig === undefined || !!accessory.context.isexternal !== shouldBeExternal) {
       this.log('Removing TV ' + accessory.displayName + ' from HomeKit');
       this.api.on('didFinishLaunching', function () {
         if (!accessory.context.isexternal) {
@@ -80,7 +82,7 @@ class SonyTV {
     this.sources = config.sources || ['extInput:hdmi', 'extInput:component', 'extInput:scart', 'extInput:cec', 'extInput:widi'];
     this.useApps = (isNull(config.applications)) ? false : (config.applications instanceof Array == true ? config.applications.length > 0 : config.applications);
     this.applications = (isNull(config.applications) || (config.applications instanceof Array != true)) ? [] : config.applications;
-    this.cookiepath = STORAGE_PATH + '/sonycookie_' + this.name;
+    this.cookiepath = getCookiePath(this.name);
 
     this.cookie = null;
     this.pwd = config.pwd || null;
@@ -105,7 +107,7 @@ class SonyTV {
     this.channelServices = [];
     this.scannedChannels = [];
 
-    const contextPath = STORAGE_PATH + '/sonytv-context-' + this.name + '.json';
+    const contextPath = getContextPath(this.name);
     try {
       if (accessory != null) {
         // accessory was supplied - dynamic plugin with configureAccessory restore
@@ -330,7 +332,7 @@ class SonyTV {
     });
     try {
       const data = JSON.stringify(storeObject);
-      fs.writeFileSync(STORAGE_PATH + '/sonytv-channels-' + this.name + '.json', data);
+      fs.writeFileSync(getChannelsPath(this.name), data);
       if (this.debug)
         this.log('Stored channels in external storage');
     } catch (e) {
@@ -340,7 +342,7 @@ class SonyTV {
   // load channels from file for external accessories
   loadChannelsFromFile() {
     const self = this;
-    const channelsPath = STORAGE_PATH + '/sonytv-channels-' + this.name + '.json';
+    const channelsPath = getChannelsPath(this.name);
     try {
       if (fs.existsSync(channelsPath)) {
         const rawdata = fs.readFileSync(channelsPath);
@@ -401,7 +403,7 @@ class SonyTV {
       } else {
         try {
           const data = JSON.stringify(this.accessory.context);
-          fs.writeFileSync(STORAGE_PATH + '/sonytv-context-' + this.accessory.context.config.name + '.json', data);
+          fs.writeFileSync(getContextPath(this.accessory.context.config.name), data);
         } catch (e) {
           this.log(e);
         }
@@ -1099,6 +1101,53 @@ function getSourceType(name) {
   } else {
     return Characteristic.InputSourceType.OTHER;
   }
+}
+
+function getCookiePath(name) {
+  return STORAGE_PATH + '/sonycookie_' + name;
+}
+
+function getContextPath(name) {
+  return STORAGE_PATH + '/sonytv-context-' + name + '.json';
+}
+
+function getChannelsPath(name) {
+  return STORAGE_PATH + '/sonytv-channels-' + name + '.json';
+}
+
+function deletePersistedFile(filePath, log) {
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+    log('Removed stale file ' + filePath);
+  }
+}
+
+function cleanupPersistedStorage(tvs, log) {
+  if (!fs.existsSync(STORAGE_PATH)) {
+    return;
+  }
+  const configuredNames = new Set(tvs.map(tv => tv.name));
+  const externalNames = new Set(tvs.filter(tv => tv.externalaccessory).map(tv => tv.name));
+  fs.readdirSync(STORAGE_PATH).forEach(file => {
+    const cookieMatch = file.match(/^sonycookie_(.+)$/);
+    if (cookieMatch) {
+      if (!configuredNames.has(cookieMatch[1])) {
+        deletePersistedFile(STORAGE_PATH + '/' + file, log);
+      }
+      return;
+    }
+    const contextMatch = file.match(/^sonytv-context-(.+)\.json$/);
+    if (contextMatch) {
+      if (!externalNames.has(contextMatch[1])) {
+        deletePersistedFile(STORAGE_PATH + '/' + file, log);
+      }
+      return;
+    }
+    const channelsMatch = file.match(/^sonytv-channels-(.+)\.json$/);
+    if (channelsMatch && !externalNames.has(channelsMatch[1])) {
+      deletePersistedFile(STORAGE_PATH + '/' + file, log);
+    }
+  });
 }
 
 // create storage folder and move files to folder
