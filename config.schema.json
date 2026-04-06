@@ -4,112 +4,139 @@
   "headerDisplay": "Go to [http://${{HOSTNAME}}:8999](http://${{HOSTNAME}}:8999) to enter the PIN when your TV displays it",
   "footerDisplay": "For documentation please see https://github.com/normen/homebridge-bravia",
   "schema": {
-    "tvs": {
-      "title": "Registered TVs",
-      "required": false,
-      "type": "array",
-      "items": {
-        "name": "TV Config",
-        "type": "object",
-        "properties": {
-          "name": {
-            "title": "Name",
-            "description": "The name of your TV in HomeKit",
-            "type": "string",
-            "required": true
-          },
-          "ip": {
-            "title": "IP / Hostname",
-            "description": "The IP address or host name of your TV, find or set in your router",
-            "type": "string",
-            "required": true
-          },
-          "port": {
-            "title": "Port",
-            "description": "HTTP port of the TV",
-            "placeholder": "80",
-            "type": "number",
-            "required": false
-          },
-          "serverPort": {
-            "title": "PIN entry server port",
-            "placeholder": "8999",
-            "type": "number",
-            "required": false
-          },
-          "mac": {
-            "title": "MAC address",
-            "description": "DO NOT set unless you need to use WOL",
-            "type": "string",
-            "required": false
-          },
-          "externalaccessory": {
-            "title": "External Accessory",
-            "description": "Workaround for multiple TVs and remote app, registers this TV as an external accessory",
-            "type": "boolean",
-            "required": false
-          },
-          "debug": {
-            "title": "Debug Log Output",
-            "description": "Gives additional debug output in the log",
-            "type": "boolean",
-            "required": false
-          },
-          "soundoutput": {
-            "title": "Sound Output",
-            "description": "Required for volume control",
-            "type": "string",
-            "default": "speaker",
-            "oneOf": [
-              { "title": "Speaker", "enum": ["speaker"] },
-              { "title": "Headphone", "enum": ["headphone"] }
-            ],
-            "required": false
-          },
-          "tvsource": {
-            "title": "TV Source",
-            "description": "Select TV input to display TV channels in the input list",
-            "type":"string",
-            "oneOf": [
-              { "title": "Satellite", "enum": ["tv:dvbs"] },
-              { "title": "Antenna", "enum": ["tv:dvbt"] },
-              { "title": "Cable", "enum": ["tv:dvbc"] }
-            ],
-            "required": false
-          },
-          "applications": {
-            "title": "App",
-            "description": "Leave empty to not list TV apps in the input list, add app names to show those apps. A part of the name should suffice.",
-            "type": "array",
-            "items":{
-              "type": "object",
-              "properties": {
-                "title": {
-                  "title": "App Name",
-                  "type": "string"
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Platform Name",
+        "description": "Optional display name for this Homebridge platform instance",
+        "type": "string",
+        "default": "Bravia Platform"
+      },
+      "tvs": {
+        "title": "Registered TVs",
+        "type": "array",
+        "items": {
+          "title": "TV Config",
+          "type": "object",
+          "properties": {
+            "name": {
+              "title": "Name",
+              "description": "The name of your TV in HomeKit",
+              "type": "string"
+            },
+            "ip": {
+              "title": "IP / Hostname",
+              "description": "The IP address or host name of your TV, find or set in your router",
+              "type": "string"
+            },
+            "port": {
+              "title": "Port",
+              "description": "HTTP port of the TV",
+              "placeholder": "80",
+              "type": "number"
+            },
+            "serverPort": {
+              "title": "PIN entry server port",
+              "placeholder": "8999",
+              "type": "number"
+            },
+            "mac": {
+              "title": "MAC address",
+              "description": "DO NOT set unless you need to use WOL",
+              "type": "string"
+            },
+            "externalaccessory": {
+              "title": "External Accessory",
+              "description": "Workaround for multiple TVs and remote app, registers this TV as an external accessory",
+              "type": "boolean"
+            },
+            "debug": {
+              "title": "Debug Log Output",
+              "description": "Gives additional debug output in the log",
+              "type": "boolean"
+            },
+            "soundoutput": {
+              "title": "Sound Output",
+              "description": "Required for volume control",
+              "type": "string",
+              "default": "speaker",
+              "oneOf": [
+                {
+                  "title": "Speaker",
+                  "enum": [
+                    "speaker"
+                  ]
+                },
+                {
+                  "title": "Headphone",
+                  "enum": [
+                    "headphone"
+                  ]
+                }
+              ]
+            },
+            "tvsource": {
+              "title": "TV Source",
+              "description": "Select TV input to display TV channels in the input list",
+              "type": "string",
+              "oneOf": [
+                {
+                  "title": "Satellite",
+                  "enum": [
+                    "tv:dvbs"
+                  ]
+                },
+                {
+                  "title": "Antenna",
+                  "enum": [
+                    "tv:dvbt"
+                  ]
+                },
+                {
+                  "title": "Cable",
+                  "enum": [
+                    "tv:dvbc"
+                  ]
+                }
+              ]
+            },
+            "applications": {
+              "title": "App",
+              "description": "Leave empty to not list TV apps in the input list, add app names to show those apps. A part of the name should suffice.",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "title": "App Name",
+                    "type": "string"
+                  }
                 }
               }
             },
-            "required": false
-          },
-          "sources": {
-            "title": "Source",
-            "description":"Defaults to: [extInput:hdmi, extInput:component, extInput:scart, extInput:cec, extInput:widi]. Adding entries to the list below will only show those inputs.",
-            "type": "array",
-            "required": false,
-            "items":{
-              "title": "Source Name",
-              "type": "string"
+            "sources": {
+              "title": "Source",
+              "description": "Defaults to: [extInput:hdmi, extInput:component, extInput:scart, extInput:cec, extInput:widi]. Adding entries to the list below will only show those inputs.",
+              "type": "array",
+              "items": {
+                "title": "Source Name",
+                "type": "string"
+              }
             }
-          }
+          },
+          "required": [
+            "name",
+            "ip"
+          ]
         }
       }
     }
   },
   "form": [
+    "name",
     {
-      "key":"tvs",
-      "items":[
+      "key": "tvs",
+      "items": [
         "tvs[].name",
         "tvs[].ip",
         "tvs[].tvsource",
@@ -120,19 +147,21 @@
         "tvs[].externalaccessory",
         "tvs[].debug",
         {
-          "key":"tvs[].applications",
-          "items":[
+          "key": "tvs[].applications",
+          "items": [
             {
-              "key":"tvs[].applications[]",
-              "items":[
+              "key": "tvs[].applications[]",
+              "items": [
                 "tvs[].applications[].title"
               ]
             }
           ]
         },
         {
-          "key":"tvs[].sources",
-          "items":["tvs[].sources[]"]
+          "key": "tvs[].sources",
+          "items": [
+            "tvs[].sources[]"
+          ]
         }
       ]
     }

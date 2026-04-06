@@ -3,6 +3,10 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-bravia/blob/master/README.md)
 
+## 2.5.1
+- update the config schema to the current Homebridge validator format
+- remove `homebridge` peer dependency so verifier checks no longer flag bundled Homebridge / hap-nodejs installs
+
 ## 2.5.0
 - add compatibility with the Homebridge 2.0 platform API while keeping Homebridge 1.x support
 - remove deprecated accessory reachability handling
