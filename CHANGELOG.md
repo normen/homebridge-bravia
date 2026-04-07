@@ -3,6 +3,9 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-bravia/blob/master/README.md)
 
+## 2.5.3
+- fetch and cache TV capabilities to populate accessory manufacturer, model, and serial information
+
 ## 2.5.2
 - clean up stale persisted files for TVs removed from config or switched out of external accessory mode
 - avoid recreating phantom external TV accessories from leftover plugin state

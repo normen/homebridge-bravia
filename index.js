@@ -83,8 +83,14 @@ class SonyTV {
     this.useApps = (isNull(config.applications)) ? false : (config.applications instanceof Array == true ? config.applications.length > 0 : config.applications);
     this.applications = (isNull(config.applications) || (config.applications instanceof Array != true)) ? [] : config.applications;
     this.cookiepath = getCookiePath(this.name);
+    this.capabilitiesPath = getCapabilitiesPath(this.name);
 
     this.cookie = null;
+    this.capabilities = {
+      detectedAt: null,
+      interface: null,
+      system: null
+    };
     this.pwd = config.pwd || null;
     this.registercheck = false;
     this.authok = false;
@@ -102,6 +108,7 @@ class SonyTV {
     this.uriToInputSource = new Map();
 
     this.loadCookie();
+    this.loadCapabilities();
 
     this.services = [];
     this.channelServices = [];
@@ -157,6 +164,8 @@ class SonyTV {
   }
   // start checking for registration and start polling status
   start() {
+    this.updateAccessoryInformation();
+    this.probeInterfaceInfo();
     this.checkRegistration();
     this.updateStatus();
   }
@@ -173,6 +182,12 @@ class SonyTV {
       }
     });
     this.services = [];
+    this.informationService = this.accessory.getService(Service.AccessoryInformation);
+    if (!this.informationService) {
+      this.informationService = new Service.AccessoryInformation();
+      this.accessory.addService(this.informationService);
+    }
+    this.services.push(this.informationService);
     this.tvService = accessory.getService(Service.Television);
     this.services.push(this.tvService);
     this.speakerService = accessory.getService(Service.TelevisionSpeaker);
@@ -183,17 +198,16 @@ class SonyTV {
   createServices() {
     /// sony/system/
     // ["getSystemInformation",[],["{\"product\":\"string\", \"region\":\"string\", \"language\":\"string\", \"model\":\"string\", \"serial\":\"string\", \"macAddr\":\"string\", \"name\":\"string\", \"generation\":\"string\", \"area\":\"string\", \"cid\":\"string\"}"],"1.0"]
+    this.informationService = this.accessory.getService(Service.AccessoryInformation);
+    if (!this.informationService) {
+      this.informationService = new Service.AccessoryInformation();
+      this.accessory.addService(this.informationService);
+    }
+    this.services.push(this.informationService);
     this.tvService = new Service.Television(this.name);
     this.services.push(this.tvService);
     this.speakerService = new Service.TelevisionSpeaker();
     this.services.push(this.speakerService);
-    // TODO: information services
-    //  var informationService = new Service.AccessoryInformation();
-    //  informationService
-    //  .setCharacteristic(Characteristic.Manufacturer, "Sony")
-    //  .setCharacteristic(Characteristic.Model, "Android TV")
-    //  .setCharacteristic(Characteristic.SerialNumber, "12345");
-    //  this.services.push(informationService);
     return this.services;
   }
   // sets the callbacks for the homebridge services to call the functions of this TV instance
@@ -231,6 +245,104 @@ class SonyTV {
     this.speakerService.getCharacteristic(Characteristic.Volume)
       .on('get', this.getVolume.bind(this))
       .on('set', this.setVolume.bind(this));
+  }
+  loadCapabilities() {
+    try {
+      if (fs.existsSync(this.capabilitiesPath)) {
+        const raw = fs.readFileSync(this.capabilitiesPath, 'utf8');
+        this.capabilities = Object.assign(this.capabilities, JSON.parse(raw));
+      }
+    } catch (e) {
+      if (this.debug)
+        this.log('Could not load capabilities: ' + e);
+    }
+  }
+  saveCapabilities() {
+    try {
+      this.capabilities.detectedAt = new Date().toISOString();
+      fs.writeFileSync(this.capabilitiesPath, JSON.stringify(this.capabilities, null, 2));
+    } catch (e) {
+      if (this.debug)
+        this.log('Could not save capabilities: ' + e);
+    }
+  }
+  updateAccessoryInformation() {
+    if (!this.informationService) {
+      return;
+    }
+    const interfaceInfo = this.capabilities.interface || {};
+    const systemInfo = this.capabilities.system || {};
+    const manufacturer = interfaceInfo.productName || 'Sony';
+    const model = systemInfo.model || interfaceInfo.modelName || 'Bravia TV';
+    const serial = systemInfo.serial || systemInfo.macAddr || this.accessory.context.uuid;
+    this.informationService
+      .setCharacteristic(Characteristic.Manufacturer, manufacturer)
+      .setCharacteristic(Characteristic.Model, model)
+      .setCharacteristic(Characteristic.SerialNumber, serial);
+  }
+  probeInterfaceInfo() {
+    const that = this;
+    var post_data = '{"id":1,"method":"getInterfaceInformation","version":"1.0","params":[]}';
+    var onError = function (err) {
+      if (that.debug)
+        that.log('probeInterfaceInfo error: ', err);
+    };
+    var onSucces = function (chunk) {
+      try {
+        if (chunk.indexOf('"error"') >= 0) {
+          return;
+        }
+        var json = JSON.parse(chunk);
+        if (!json || !json.result || !json.result[0]) {
+          return;
+        }
+        var info = json.result[0];
+        that.capabilities.interface = {
+          modelName: info.modelName || '',
+          productName: info.productName || '',
+          interfaceVersion: info.interfaceVersion || ''
+        };
+        that.updateAccessoryInformation();
+        that.saveCapabilities();
+      } catch (e) {
+        if (that.debug)
+          that.log('probeInterfaceInfo parse error: ', e);
+      }
+    };
+    that.makeHttpRequest(onError, onSucces, '/sony/system/', post_data, false);
+  }
+  probeSystemInfo() {
+    const that = this;
+    var post_data = '{"id":1,"method":"getSystemInformation","version":"1.0","params":[]}';
+    var onError = function (err) {
+      if (that.debug)
+        that.log('probeSystemInfo error: ', err);
+    };
+    var onSucces = function (chunk) {
+      try {
+        if (chunk.indexOf('"error"') >= 0) {
+          return;
+        }
+        var json = JSON.parse(chunk);
+        if (!json || !json.result || !json.result[0]) {
+          return;
+        }
+        var info = json.result[0];
+        that.capabilities.system = {
+          model: info.model || '',
+          serial: info.serial || '',
+          generation: info.generation || '',
+          language: info.language || '',
+          macAddr: info.macAddr || ''
+        };
+        that.updateAccessoryInformation();
+        that.saveCapabilities();
+      } catch (e) {
+        if (that.debug)
+          that.log('probeSystemInfo parse error: ', e);
+      }
+    };
+    that.makeHttpRequest(onError, onSucces, '/sony/system/', post_data, false);
   }
   // Do TV status check every 5 seconds
   updateStatus() {
@@ -281,6 +393,7 @@ class SonyTV {
         });
       } else {
         self.authok = true;
+        self.probeSystemInfo();
         self.receiveSources(true);
       }
     };
@@ -1115,6 +1228,10 @@ function getChannelsPath(name) {
   return STORAGE_PATH + '/sonytv-channels-' + name + '.json';
 }
 
+function getCapabilitiesPath(name) {
+  return STORAGE_PATH + '/sonytv-capabilities-' + name + '.json';
+}
+
 function deletePersistedFile(filePath, log) {
   if (fs.existsSync(filePath)) {
     fs.unlinkSync(filePath);
@@ -1145,6 +1262,11 @@ function cleanupPersistedStorage(tvs, log) {
     }
     const channelsMatch = file.match(/^sonytv-channels-(.+)\.json$/);
     if (channelsMatch && !externalNames.has(channelsMatch[1])) {
+      deletePersistedFile(STORAGE_PATH + '/' + file, log);
+      return;
+    }
+    const capabilitiesMatch = file.match(/^sonytv-capabilities-(.+)\.json$/);
+    if (capabilitiesMatch && !configuredNames.has(capabilitiesMatch[1])) {
       deletePersistedFile(STORAGE_PATH + '/' + file, log);
     }
   });
