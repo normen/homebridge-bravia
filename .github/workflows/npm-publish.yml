@@ -1,0 +1,43 @@
+name: Publish to npm
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Verify release tag matches package version
+        shell: bash
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          TAG="${GITHUB_REF_NAME}"
+
+          if [ "$TAG" != "$VERSION" ] && [ "$TAG" != "v$VERSION" ]; then
+            echo "Release tag '$TAG' does not match package.json version '$VERSION'."
+            exit 1
+          fi
+
+      - name: Syntax check
+        run: node -c index.js
+
+      - name: Preview published package
+        run: npm pack --dry-run
+
+      - name: Publish package
+        run: npm publish --provenance --access public
