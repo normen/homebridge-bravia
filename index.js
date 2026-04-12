@@ -1180,7 +1180,7 @@ class SonyTV {
 }
 
 function isNull(object) {
-  return object == undefined || null;
+  return object === undefined || object === null;
 }
 
 function uuidv4() {
